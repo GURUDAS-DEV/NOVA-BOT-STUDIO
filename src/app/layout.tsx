@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Outfit, Space_Grotesk, Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import { Provider } from "./provider";
-import Navbar from "./Navbar";
-import Footer from "./Footer";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -37,19 +35,15 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${outfit.variable} ${space.variable} ${poppins.variable} ${inter.variable} antialiased`}
       >
-        <Provider>
-          <Navbar />
-          {children}
-
-          <Footer />
-        </Provider>
+        <Provider>{children}</Provider>
       </body>
     </html>
   );
 }
-

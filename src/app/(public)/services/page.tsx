@@ -6,14 +6,10 @@ import { AiFillInstagram } from "react-icons/ai";
 import { FaDiscord, FaTelegram, FaWhatsapp } from "react-icons/fa";
 import { TbWorldCode } from "react-icons/tb";
 import { Button } from "@/components/ui/button";
-import Navbar from "../Navbar";
-import Footer from "../Footer";
 
 const ServicesPage = () => {
   return (
     <div className="w-full overflow-hidden">
-      {/* Navigation */}
-      <Navbar />
 
       {/* Hero Section */}
       <div className="w-full pt-40 pb-1 px-6 bg-pink-100 dark:bg-stone-900">
@@ -237,8 +233,6 @@ const ServicesPage = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <Footer />
     </div>
   );
 };

@@ -6,10 +6,12 @@ import Image from "next/image";
 import { AiFillInstagram } from "react-icons/ai";
 import { FaDiscord, FaFacebook, FaTelegram, FaWhatsapp } from "react-icons/fa";
 import { TbWorldCode } from "react-icons/tb";
-import { useState } from "react";
-import Footer from "./Footer";
+import { useState } from "react";;
 
 export default function Home() {
+  
+
+  
   return (
     <div className="w-full overflow-hidden">
       <div className="min-h-screen overflow-hidden flex flex-col justify-center items-center premium-animated-gradient pt-20">
@@ -98,73 +100,74 @@ export default function Home() {
             </button>
           </div>
           <div className="flex font-medium font-space-grotesk justify-center items-center w-full flex-col gap-2">
-            <h1 className="text-5xl text-black dark:text-white">
+            <h1 className=" text-2xl text-center sm:text-3xl md:text-4xl lg:text-5xl text-black dark:text-white">
               Create your first Customize Bot
             </h1>
-            <h1 className="text-5xl text-black dark:text-white">
+            <h1 className=" text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-black dark:text-white">
               For any platform
             </h1>
           </div>
-          <div className="w-full pt-5 text-xl flex justify-center items-center">
-            <h3 className="w-[40%] text-center text-black dark:text-white font-outfit">
+          <div className="w-full pt-5  flex justify-center items-center">
+            <h3 className="w-[90%] sm:w-[70%] md:w-[60%] lg:w-[40%] text-base md:text-xl text-center text-black dark:text-white font-outfit">
               Create your bot! automate your Social Media! Make your Life
               easier.
             </h3>
           </div>
 
-          <div className="flex flex-col justify-center items-center mt-24 w-full ">
+          <div className="flex flex-col justify-center items-center mt-12 sm:mt-16 md:mt-24 w-full px-4">
             {/* single upper line crossing through all the cards */}
             <div className="relative w-full flex justify-center items-center flex-col">
               <div className="w-full h-1 "></div>
-              <div className="h-1 w-[39%] flex border-t-2 border-t-black"></div>
+              <div className="h-1 w-[60%] sm:w-[50%] md:w-[39%] flex border-t-2 border-t-black dark:border-t-white"></div>
               {/* first 3 icon list */}
-              <div className="absolute -top-[20%] flex justify-center items-center gap-[10%] w-full">
+              <div className="absolute -top-[20%] flex justify-center items-center gap-[8%] sm:gap-[10%] w-full">
                 <IconCard>
-                  <FaFacebook className="h-11 w-11 text-blue-600" />
+                  <FaFacebook className="h-7 w-7 sm:h-9 sm:w-9 md:h-11 md:w-11 text-blue-600" />
                 </IconCard>
                 <IconCard>
-                  <AiFillInstagram className="h-11 w-11 text-pink-500" />
+                  <AiFillInstagram className="h-7 w-7 sm:h-9 sm:w-9 md:h-11 md:w-11 text-pink-500" />
                 </IconCard>
                 <IconCard>
-                  <FaTelegram className="h-11 w-11 text-blue-400" />
+                  <FaTelegram className="h-7 w-7 sm:h-9 sm:w-9 md:h-11 md:w-11 text-blue-400" />
                 </IconCard>
               </div>
               {/* 2 lines connecting upper one line */}
-              <div className="w-screen h-auto flex justify-center items-center gap-56">
-                <div className="h-[155px] -mt-1 w-1 border-l-2 border-l-black"></div>
-                <div className="h-[155px] -mt-1 w-1 border-l-2 border-l-black"></div>
+              <div className="w-screen h-auto flex justify-center items-center gap-32 sm:gap-40 md:gap-56">
+                <div className="h-[100px] sm:h-[130px] md:h-[155px] -mt-1 w-1 border-l-2 border-l-black dark:border-l-white"></div>
+                <div className="h-[100px] sm:h-[130px] md:h-[155px] -mt-1 w-1 border-l-2 border-l-black dark:border-l-white"></div>
               </div>
               <div className=""></div>
 
-              <div className="absolute flex justify-center items-center top-[70%] gap-36 w-full">
+              <div className="absolute flex justify-center items-center top-[65%] sm:top-[68%] md:top-[70%] gap-24 sm:gap-28 md:gap-36 w-full">
                 <IconCard>
-                  <FaDiscord className="h-11 w-11 text-indigo-500" />
+                  <FaDiscord className="h-7 w-7 sm:h-9 sm:w-9 md:h-11 md:w-11 text-indigo-500" />
                 </IconCard>
                 <IconCard>
-                  <TbWorldCode className="h-11 w-11 text-gray-500" />
+                  <TbWorldCode className="h-7 w-7 sm:h-9 sm:w-9 md:h-11 md:w-11 text-gray-500 dark:text-gray-400" />
                 </IconCard>
               </div>
-              <div className="h-1 mt-10 w-[20%] flex border-t-2 border-t-black"></div>
+              <div className="h-1 mt-6 sm:mt-8 md:mt-10 w-[30%] sm:w-[25%] md:w-[20%] flex border-t-2 border-t-black dark:border-t-white"></div>
             </div>
             <div className="w-full flex justify-center items-center">
-              <div className="h-[150px]  -mt-1 w-1 border-r-2 border-r-black "></div>
+              <div className="h-[100px] sm:h-[120px] md:h-[150px] -mt-1 w-1 border-r-2 border-r-black dark:border-r-white"></div>
             </div>
-            <div className="-mt-5">
+            <div className="-mt-3 sm:-mt-4 md:-mt-5 px-4">
               <Image
                 src="/LandingPageImage1.png"
                 alt="LandingPageImage1.png"
                 width={800}
                 height={600}
+                className="w-full max-w-[300px] sm:max-w-[500px] md:max-w-[650px] lg:max-w-[800px] h-auto"
               />
             </div>
             {/* 3 lines connecting upper image  */}
-            <div className="w-full -mt-6 h-auto flex justify-center items-center gap-[22%]">
-              <div className="h-[155px] -mt-1 w-1 border-l-2 border-l-black"></div>
-              <div className="h-[155px] -mt-1 w-1 border-l-2 border-l-black"></div>
-              <div className="h-[155px] -mt-1 w-1 border-l-2 border-l-black"></div>
+            <div className="w-full -mt-4 sm:-mt-5 md:-mt-6 h-auto flex justify-center items-center gap-[18%] sm:gap-[20%] md:gap-[22%]">
+              <div className="h-[100px] sm:h-[130px] md:h-[155px] -mt-1 w-1 border-l-2 border-l-black dark:border-l-white"></div>
+              <div className="h-[100px] sm:h-[130px] md:h-[155px] -mt-1 w-1 border-l-2 border-l-black dark:border-l-white"></div>
+              <div className="h-[100px] sm:h-[130px] md:h-[155px] -mt-1 w-1 border-l-2 border-l-black dark:border-l-white"></div>
             </div>
 
-            <div className="w-full flex justify-center items-center gap-[10%]">
+            <div className="w-full flex flex-wrap justify-center items-center gap-4 sm:gap-6 md:gap-8 lg:gap-[10%] px-4">
               <FeatureCard>
                 <div className="h-full w-full flex justify-center gap-2 flex-col items-center">
                   <Image
@@ -172,8 +175,9 @@ export default function Home() {
                     height={120}
                     width={120}
                     alt="image_of_eye"
+                    className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28"
                   />
-                  <div className="font-outfit text-center text-2xl">
+                  <div className="font-outfit text-center text-lg sm:text-xl md:text-2xl">
                     <h2>Create</h2>
                     <h2>Bots</h2>
                   </div>
@@ -186,8 +190,9 @@ export default function Home() {
                     height={120}
                     width={120}
                     alt="image_of_eye"
+                    className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28"
                   />
-                  <div className="font-outfit text-center text-2xl">
+                  <div className="font-outfit text-center text-lg sm:text-xl md:text-2xl">
                     <h2>Automate</h2>
                     <h2>Things</h2>
                   </div>
@@ -200,18 +205,19 @@ export default function Home() {
                     height={120}
                     width={120}
                     alt="image_of_eye"
+                    className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28"
                   />
-                  <div className="font-outfit text-center text-2xl">
+                  <div className="font-outfit text-center text-lg sm:text-xl md:text-2xl">
                     <h2>Analyze</h2>
                     <h2>All</h2>
                   </div>
                 </div>
               </FeatureCard>
             </div>
-            <div className="flex w-full justify-center mt-10 items-center font-outfit">
-              <div className="flex text-center flex-col w-[68%] text-black gap-5 dark:text-white text-lg justify-center items-center ">
+            <div className="flex w-full justify-center mt-8 sm:mt-10 items-center font-outfit px-4">
+              <div className="flex text-center flex-col w-full sm:w-[85%] md:w-[75%] lg:w-[68%] text-black gap-4 sm:gap-5 dark:text-white text-sm sm:text-base md:text-lg justify-center items-center">
                 <h1>By using NOVA BOT STUDIO, You can create a custom AI Powered Bot on platform like Instagram, Whatsapp, Discord, Telegram and for your own webpage Also. On the top of it, you can also automate your messaging system on the selected platforms!</h1>
-                <Button size="default" className="bg-blue-400  dark:bg-black">Join Us now</Button>
+                <Button size="default" className="bg-blue-400 dark:bg-black w-full sm:w-auto">Join Us now</Button>
               </div>
             </div>
 

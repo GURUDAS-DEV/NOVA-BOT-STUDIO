@@ -1,5 +1,5 @@
 
-import { Mail, Phone, MapPin, ArrowRight } from "lucide-react";
+import { Mail,  MapPin, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { FaTwitter, FaLinkedin, FaGithub, FaInstagram } from "react-icons/fa";
 
@@ -116,12 +116,12 @@ const Footer = () => {
           <ContactItem
             icon={<Mail className="h-5 w-5 text-pink-500" />}
             title="Email"
-            value="support@novabot.studio"
+            value="novaBotStudio@gmail.com"
           />
           <ContactItem
-            icon={<Phone className="h-5 w-5 text-blue-500" />}
-            title="Phone"
-            value="+91 (123) 456-7890"
+            icon={<Mail  className="h-5 w-5 text-blue-500" />}
+            title="Direct Contact"
+            value="gurudaswork9811@gmail.com"
           />
           <ContactItem
             icon={<MapPin className="h-5 w-5 text-purple-500" />}

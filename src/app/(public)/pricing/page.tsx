@@ -2,14 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Crown, Sparkles, Mail, X, Check } from "lucide-react";
-import Navbar from "../Navbar";
-import Footer from "../Footer";
 
 const PricingPage = () => {
   return (
     <div className="w-full overflow-hidden">
-      {/* Navigation */}
-      <Navbar />
+
 
       {/* Hero Section */}
       <div className="w-full pt-40 pb-16 px-6 bg-pink-50 dark:bg-stone-900">
@@ -374,8 +371,6 @@ const PricingPage = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <Footer />
     </div>
   );
 };
