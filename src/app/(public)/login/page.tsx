@@ -5,70 +5,162 @@ import Link from "next/link";
 import { Mail, Lock, CheckCircle2, Github } from "lucide-react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { FcGoogle } from "react-icons/fc";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
+import { useAuthStore } from "@/lib/Store/store";
 
 const LoginPage = () => {
-  const [formData, setFormData] = useState<{ email: string; password: string; otp: string }>({
+
+  const {setAuthData} = useAuthStore();
+
+  const [formData, setFormData] = useState<{
+    email: string;
+    password: string;
+    otp: string;
+  }>({
     email: "",
     password: "",
     otp: "",
   });
-  const [loginMethod, setLoginMethod] = useState<"password" | "otp" | null>(null);
+  const [loginMethod, setLoginMethod] = useState<"password" | "otp" | null>(
+    null
+  );
   const [otpSent, setOtpSent] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) : void => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
   };
 
-  const handleSendOTP = async (e: React.FormEvent) : Promise<void> => {
+  //send OTP to email
+  const handleSendOTP = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Dummy OTP sending logic
-    setTimeout(() => {
+    const response = await fetch("http://localhost:9000/api/auth/generateOTPForLogin", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email: formData.email }),
+      credentials: "include",
+    });
+    const data = await response.json();
+    console.log(data);
+
+    if (response.ok) {
+      setIsLoading(false);
       setOtpSent(true);
+      toast.success("OTP sent successfully to your email!");
+    } else {
       setIsLoading(false);
-      alert("OTP sent to your email!");
-    }, 1500);
+      toast.error(`${data.message}`);
+    }
   };
 
-  const handleLoginWithPassword = async (e: React.FormEvent) : Promise<void> => {
+
+  //login via OTP
+  const handleLoginWithOTP = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Dummy password login logic
-    setTimeout(() => {
+    if(formData.otp.length !== 6){
       setIsLoading(false);
-      alert("Login successful with password!");
-    }, 1500);
+      toast.error("Please enter a valid 6-digit OTP.");
+      return;
+    }
+
+    const response = await fetch("http://localhost:9000/api/auth/LoginWithOTP",{
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body : JSON.stringify({ email : formData.email, OTP: formData.otp }),
+      credentials: "include",
+    });
+
+    const data = await response.json();
+    console.log(data);
+
+    if(response.ok){
+      setIsLoading(false);
+      toast.success("Login successful!");
+      setAuthData({
+        isLoggedIn: true,
+        username: data.username,
+        email: data.email,
+      });
+      window.location.href = "/home";
+    } else {
+      setIsLoading(false);
+      toast.error(`${data.message}`);
+    }
   };
 
-  const handleLoginWithOTP = async (e: React.FormEvent) : Promise<void> => {
+  const handleLoginWithPassword = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Dummy OTP login logic
-    setTimeout(() => {
+    const response = await fetch(
+      "http://localhost:9000/api/auth/loginByPassword",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+        credentials: "include",
+      }
+    );
+    const data = await response.json();
+    console.log(data);
+
+    if (response.ok) {
       setIsLoading(false);
-      alert("Login successful with OTP!");
-    }, 1500);
+      toast.success("Login successfull!");
+      setAuthData({
+        isLoggedIn: true,
+        username: data.username,
+        email: data.email,
+      });
+      window.location.href = "/home";
+    } 
+    else {
+      setIsLoading(false);
+      toast.error(`${data.message}`);
+    }
   };
 
-  const handleGoogleLogin = () : void => {
-    // Dummy Google OAuth logic
-    alert("Redirecting to Google OAuth...");
+const handleGoogleLogin = async() => {
+    const response = await fetch('http://localhost:9000/api/auth/googleOAuth');
+    const data = await response.json();
+    if(response.ok){
+      window.location.href = data.url;
+    }
+    else{
+      toast.error(data.message || "Failed to initiate Google OAuth. Please try again later.");
+    }
+};
+
+  const handleGithubLogin = async () => {
+    const response = await fetch('http://localhost:9000/api/auth/githubOAuth');
+    const data = await response.json();
+    if(response.ok){
+      window.location.href = data.url;
+    }
+    else{
+      toast.error(data.message || "Failed to initiate Google OAuth. Please try again later.");
+    }
   };
 
-  const handleGithubLogin = () => {
-    // Dummy GitHub OAuth logic
-    alert("Redirecting to GitHub OAuth...");
-  };
-
-  const resetLoginMethod = () : void => {
+  const resetLoginMethod = (): void => {
     setLoginMethod(null);
     setOtpSent(false);
     setFormData({
@@ -80,7 +172,7 @@ const LoginPage = () => {
 
   return (
     <div className="w-full overflow-hidden">
-
+      <Toaster position="top-right" duration={3000} richColors/>
       {/* Login Section */}
       <div className="w-full min-h-screen pt-32 pb-20 px-6 bg-linear-to-br from-blue-50 via-white to-pink-50 dark:from-stone-900 dark:via-black dark:to-stone-900">
         <div className="w-full max-w-md mx-auto">
@@ -157,7 +249,7 @@ const LoginPage = () => {
                 <div className="space-y-3">
                   <button
                     onClick={handleGoogleLogin}
-                    className="w-full flex items-center justify-center gap-3 px-6 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-lg font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300"
+                    className="cursor-pointer w-full flex items-center justify-center gap-3 px-6 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-lg font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300"
                   >
                     <FcGoogle className="h-5 w-5" />
                     Continue with Google
@@ -251,7 +343,10 @@ const LoginPage = () => {
               </form>
             ) : (
               // OTP Login Form
-              <form onSubmit={otpSent ? handleLoginWithOTP : handleSendOTP} className="space-y-4">
+              <form
+                onSubmit={otpSent ? handleLoginWithOTP : handleSendOTP}
+                className="space-y-4"
+              >
                 {/* Back Button */}
                 <button
                   type="button"
@@ -356,7 +451,6 @@ const LoginPage = () => {
           </div>
         </div>
       </div>
-
     </div>
   );
 };

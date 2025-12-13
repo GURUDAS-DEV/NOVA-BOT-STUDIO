@@ -6,10 +6,12 @@ import { Moon, Sun, LogIn, UserPlus, Menu, X } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
+import { useAuthStore } from "@/lib/Store/store"
 
 const Navbar = () => {
   const { theme, setTheme } = useTheme()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const {isLoggedIn} = useAuthStore()
 
   const navLinks = [
     { name: "Home", href: "/" },
@@ -71,30 +73,41 @@ const Navbar = () => {
               <span className="sr-only">Toggle theme</span>
             </Button>
 
-            {/* Login Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hidden lg:flex items-center gap-2 font-medium rounded-full text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-              asChild
-            >
-              <Link href="/login">
-                <LogIn className="h-4 w-4" />
-                Log In
-              </Link>
-            </Button>
+            {/* Auth / Home Button (shows 'Go to Home' when logged in) */}
+            {isLoggedIn ? (
+              <Button
+                size="sm"
+                className="flex items-center gap-2 font-medium rounded-full bg-blue-600 text-white hover:bg-blue-700"
+                asChild
+              >
+                <Link href="/home">Go to Home</Link>
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="hidden md:flex items-center gap-2 font-medium rounded-full text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                  asChild
+                >
+                  <Link href="/login">
+                    <LogIn className="h-4 w-4" />
+                    Log In
+                  </Link>
+                </Button>
 
-            {/* Sign Up Button */}
-            <Button
-              size="sm"
-              className="hidden lg:flex items-center gap-2 font-medium rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100"
-              asChild
-            >
-              <Link href="/signup">
-                <UserPlus className="h-4 w-4" />
-                Sign Up
-              </Link>
-            </Button>
+                <Button
+                  size="sm"
+                  className="hidden md:flex items-center gap-2 font-medium rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100"
+                  asChild
+                >
+                  <Link href="/signup">
+                    <UserPlus className="h-4 w-4" />
+                    Sign Up
+                  </Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -169,26 +182,39 @@ const Navbar = () => {
 
           {/* Auth Buttons */}
           <div className="flex flex-col gap-3 mt-auto">
-            <Button
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2 font-medium rounded-xl text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700"
-              asChild
-            >
-              <Link href="/login" onClick={closeMobileMenu}>
-                <LogIn className="h-4 w-4" />
-                Log In
-              </Link>
-            </Button>
+            {isLoggedIn ? (
+              <Button
+                className="w-full flex items-center justify-center gap-2 font-medium rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+                asChild
+              >
+                <Link href="/home" onClick={closeMobileMenu}>
+                  Go to Home
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center justify-center gap-2 font-medium rounded-xl text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700"
+                  asChild
+                >
+                  <Link href="/login" onClick={closeMobileMenu}>
+                    <LogIn className="h-4 w-4" />
+                    Log In
+                  </Link>
+                </Button>
 
-            <Button
-              className="w-full flex items-center justify-center gap-2 font-medium rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100"
-              asChild
-            >
-              <Link href="/signup" onClick={closeMobileMenu}>
-                <UserPlus className="h-4 w-4" />
-                Sign Up
-              </Link>
-            </Button>
+                <Button
+                  className="w-full flex items-center justify-center gap-2 font-medium rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100"
+                  asChild
+                >
+                  <Link href="/signup" onClick={closeMobileMenu}>
+                    <UserPlus className="h-4 w-4" />
+                    Sign Up
+                  </Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -122,7 +122,7 @@ export default function Home() {
               {/* first 3 icon list */}
               <div className="absolute -top-[20%] flex justify-center items-center gap-[8%] sm:gap-[10%] w-full">
                 <IconCard>
-                  <FaFacebook className="h-7 w-7 sm:h-9 sm:w-9 md:h-11 md:w-11 text-blue-600" />
+                  <FaWhatsapp className="h-7 w-7 sm:h-9 sm:w-9 md:h-11 md:w-11 text-green-600" />
                 </IconCard>
                 <IconCard>
                   <AiFillInstagram className="h-7 w-7 sm:h-9 sm:w-9 md:h-11 md:w-11 text-pink-500" />

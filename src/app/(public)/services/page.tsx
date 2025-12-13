@@ -268,7 +268,7 @@ function ServiceCard({
         {title}
       </h3>
       <p
-        className="text-sm font-semibold text-transparent bg-linear-to-r bg-clip-text"
+        className="text-sm text-black dark:text-white font-outfit font-semibold  bg-linear-to-r bg-clip-text"
         style={{
           backgroundImage: `linear-gradient(to right, var(--tw-gradient-stops))`,
         }}

@@ -20,8 +20,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     refreshUser : async () => {
         try{
             set({ loading: true });
-            const response = await fetch("/api/auth/validateToken", {
-                credentials: "include", 
+            const response = await fetch("http://localhost:9000/api/auth/validateToken", {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
             });
 
             const data = await response.json();
@@ -42,6 +46,7 @@ export const useAuthStore = create<AuthState>((set) => ({
                     lastUpdatedAt : new Date(0),
                 });
             }
+            console.log("User data refreshed:", data);
         }
         catch (error){
             console.error("Failed to refresh user data:", error);
