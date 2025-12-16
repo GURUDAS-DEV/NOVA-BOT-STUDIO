@@ -17,29 +17,78 @@ import {
 } from "react-icons/fa";
 import { BiRocket, BiLink } from "react-icons/bi";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import type { botInterface } from "@/lib/Types/getBots";
+import { Spinner } from "@/components/ui/spinner";
 
 const HomePage = () => {
-  const { username } = useAuthStore();
-  
+  const { username, userId } = useAuthStore();
+  const [noOfBot, setNoOfBot] = useState<number>(0);
+  const [noOfActiveBot, setNoOfActiveBot] = useState<number>(0);
+  const [recentBots, setRecentBots] = useState<botInterface["activeBots"]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+
   // Mock data - replace with real data from your backend
   const stats = {
-    botsCreated: 12,
-    activeBots: 8,
+    botsCreated: noOfBot,
+    activeBots: noOfActiveBot,
     totalMessages: "2.4k",
     uptime: "99.9%"
   };
 
-  const recentBots = [
-    { id: 1, name: "Customer Support Bot", platform: "Telegram", status: "active", messages: 342 },
-    { id: 2, name: "Sales Assistant", platform: "Discord", status: "active", messages: 189 },
-    { id: 3, name: "FAQ Bot", platform: "Telegram", status: "inactive", messages: 0 },
-  ];
+  // const recentBots = [
+  //   { id: 1, name: "Customer Support Bot", platform: "Telegram", status: "active", messages: 342 },
+  //   { id: 2, name: "Sales Assistant", platform: "Discord", status: "active", messages: 189 },
+  //   { id: 3, name: "FAQ Bot", platform: "Telegram", status: "inactive", messages: 0 },
+  // ];
 
   const gettingStartedSteps = [
     { id: 1, title: "Create your first bot", description: "Set up a bot in minutes", completed: false, href: "/Create" },
     { id: 2, title: "Connect a platform", description: "Link Telegram, Discord, or WhatsApp", completed: false, href: "/home/integration/telegram" },
     { id: 3, title: "Configure responses", description: "Customize your bot's behavior", completed: false, href: "/home/manage" },
   ];
+
+
+  const botDetails = async() : Promise<void>=>{
+    try{
+      setLoading(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/getBotDetailsForHomePage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      const data = await response.json();
+      console.log("Bot details data:", data);
+      if(response.ok){
+        setNoOfBot(data.noOfBots);
+        setNoOfActiveBot(data.noOfActiveBots);
+        setRecentBots(data.recentBots);
+      }
+      
+    }
+    catch(error){
+      console.error("Error fetching bot details:", error);
+    } finally{
+      setLoading(false);
+    }
+  }
+
+  useEffect(()=>{
+    botDetails();
+  },[]);
+
+  if(loading){
+    return (
+      <div className="flex justify-center items-center w-full h-screen">
+        <Button variant="ghost" size="lg" disabled>
+          <Spinner className="mr-2 h-8 w-8 dark:text-white an"  />
+          <p className="text-black dark:text-white">Loading...</p>
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-7xl overflow-hidden mx-auto space-y-8">
@@ -104,7 +153,7 @@ const HomePage = () => {
             <FaRobot className="w-4 h-4 text-gray-400" />
           </div>
           <p className="text-3xl font-semibold text-gray-900 dark:text-white font-outfit">
-            {stats.botsCreated}
+            {stats.botsCreated || 0}
           </p>
         </div>
 
@@ -116,7 +165,7 @@ const HomePage = () => {
             <FaPlay className="w-4 h-4 text-green-500" />
           </div>
           <p className="text-3xl font-semibold text-gray-900 dark:text-white font-outfit">
-            {stats.activeBots}
+            {stats.activeBots || 0}
           </p>
         </div>
 
@@ -162,12 +211,12 @@ const HomePage = () => {
           <div className="space-y-4">
             {recentBots.map((bot) => (
               <div 
-                key={bot.id}
+                key={bot._id}
                 className="flex items-center justify-between p-4 bg-gray-50 dark:bg-stone-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-4">
                   <div className="p-2 bg-white dark:bg-stone-900 rounded-lg border border-gray-200 dark:border-stone-700">
-                    {bot.platform === "Telegram" ? (
+                    {bot.platform[0] == "Telegram" ? (
                       <FaTelegram className="w-5 h-5 text-blue-500" />
                     ) : (
                       <FaDiscord className="w-5 h-5 text-indigo-500" />
@@ -175,10 +224,10 @@ const HomePage = () => {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900 dark:text-white font-outfit">
-                      {bot.name}
+                      {bot.botName}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 font-inter">
-                      {bot.platform} • {bot.messages} messages
+                      {bot.platform} • Created on {new Date(bot.created_at).toLocaleDateString()}
                     </p>
                   </div>
                 </div>

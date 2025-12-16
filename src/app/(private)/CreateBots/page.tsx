@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { 
   FaTelegram, 
   FaDiscord, 
@@ -18,15 +18,20 @@ import {
 import { BiBot, BiData, BiCloud } from "react-icons/bi";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
+import { useAuthStore } from "@/lib/Store/store";
 
 const CreateBotPage = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [botType, setBotType] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<string | null>(null);
+  const [botName, setBotName] = useState<string>("");
+  const [botDescription, setBotDescription] = useState<string>("");
+
+  const {userId} =  useAuthStore();
 
   const platforms = [
     { 
-      id: "telegram", 
+      id: "Telegram", 
       name: "Telegram", 
       icon: FaTelegram, 
       color: "text-blue-500", 
@@ -34,7 +39,7 @@ const CreateBotPage = () => {
       isPaid: false 
     },
     { 
-      id: "discord", 
+      id: "Discord", 
       name: "Discord", 
       icon: FaDiscord, 
       color: "text-indigo-500", 
@@ -42,7 +47,7 @@ const CreateBotPage = () => {
       isPaid: false 
     },
     { 
-      id: "website", 
+      id: "API", 
       name: "Website", 
       icon: MdOutlineWeb, 
       color: "text-green-500", 
@@ -50,7 +55,7 @@ const CreateBotPage = () => {
       isPaid: false 
     },
     { 
-      id: "instagram", 
+      id: "Instagram", 
       name: "Instagram", 
       icon: FaInstagram, 
       color: "text-pink-500", 
@@ -58,7 +63,7 @@ const CreateBotPage = () => {
       isPaid: true 
     },
     { 
-      id: "whatsapp", 
+      id: "WhatsApp", 
       name: "WhatsApp", 
       icon: FaWhatsapp, 
       color: "text-emerald-500", 
@@ -93,19 +98,19 @@ const CreateBotPage = () => {
 
   const dataSources = [
     {
-      id: "ai",
+      id: "AI",
       title: "AI Powered",
       description: "Use LLM for intelligent responses",
       icon: Sparkles,
     },
     {
-      id: "database",
+      id: "DB",
       title: "Database",
       description: "Connect your own data source",
       icon: BiData,
     },
     {
-      id: "api",
+      id: "API",
       title: "External API",
       description: "Integrate third-party services",
       icon: BiCloud,
@@ -114,14 +119,44 @@ const CreateBotPage = () => {
 
   const getPlatformConfig = (platform: string | null) => {
     const configs: Record<string, string> = {
-      telegram: "Bot Token will be required in the next step",
-      discord: "Server connection will be configured next",
-      website: "Embeddable widget code will be generated",
-      instagram: "Business account connection required",
-      whatsapp: "Business account verification needed",
+      Telegram: "Bot Token will be required in the next step",
+      Discord: "Server connection will be configured next",
+      API: "Embeddable widget code will be generated",
+      Instagram: "Business account connection required",
+      WhatsApp: "Business account verification needed",
     };
     return platform ? configs[platform] : null;
   };
+
+
+  const createBots = async () : Promise<void>=>{
+    try{
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/createBot`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          platform: selectedPlatform,
+          intelligenceSource :  dataSource,
+          purpose : botType,
+          botName : botName,
+          botDescription : botDescription,
+          userId : userId ,
+        }),
+      });
+      const data = await response.json();
+
+      if(!response.ok){
+        throw new Error(data.message || 'Failed to create bot');
+      }
+      console.log("Bot created successfully:", data);
+
+    }
+    catch(e){
+      console.log("Error creating bot:", e);
+    }
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
@@ -155,6 +190,8 @@ const CreateBotPage = () => {
               </label>
               <input
                 type="text"
+                value={botName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBotName(e.target.value)}
                 placeholder="e.g., Customer Support Bot"
                 className="w-full px-4 py-2.5 bg-white dark:bg-stone-950 border border-gray-300 dark:border-stone-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 dark:focus:ring-pink-600 focus:border-transparent transition-all font-inter"
               />
@@ -165,6 +202,8 @@ const CreateBotPage = () => {
                 Bot Description <span className="text-gray-400 text-xs">(Optional But Highly recommended)</span>
               </label>
               <textarea
+                value={botDescription}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBotDescription(e.target.value)}
                 rows={3}
                 placeholder="Describe what your bot does..."
                 className="w-full px-4 py-2.5 bg-white dark:bg-stone-950 border border-gray-300 dark:border-stone-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 dark:focus:ring-pink-600 focus:border-transparent transition-all font-inter resize-none"
@@ -324,6 +363,7 @@ const CreateBotPage = () => {
             Cancel
           </Button>
           <Button 
+          onClick={createBots}
             className="px-8 py-5 bg-pink-600 hover:bg-pink-700 text-white font-inter"
           >
             Create Bot

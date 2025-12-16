@@ -1,10 +1,13 @@
 import { create } from "zustand";
+// import dotenv from "dotenv";
+// dotenv.config();
 
 interface AuthState {
     loading : boolean;
     isLoggedIn: boolean;
     username: string | null;
     email: string | null;
+    userId : string | null;
     lastUpdatedAt: Date;
     refreshUser: () => Promise<void>;
     setAuthData: (data: Partial<Omit<AuthState, "refreshUser" | "setAuthData">>) => void;
@@ -15,12 +18,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     isLoggedIn: false,
     username: null,
     email: null,
+    userId : null,
     lastUpdatedAt: new Date(0),
 
     refreshUser : async () => {
         try{
             set({ loading: true });
-            const response = await fetch("http://localhost:9000/api/auth/validateToken", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/validateToken`, {
                 method: "GET",
                 credentials: "include",
                 headers: {
@@ -36,6 +40,7 @@ export const useAuthStore = create<AuthState>((set) => ({
                     username : data.username,
                     email : data.email,
                     lastUpdatedAt : new Date(),
+                    userId : data.userId,
                 })
             }
             else{

@@ -1,133 +1,79 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { 
-  FaTelegram, 
-  FaDiscord, 
-  FaInstagram, 
-  FaWhatsapp 
-} from "react-icons/fa";
-import { 
+import { FaTelegram, FaDiscord, FaInstagram, FaWhatsapp } from "react-icons/fa";
+import {
   MdOutlineWeb,
-  MdMoreVert,
   MdPlayArrow,
   MdPause,
   MdDelete,
   MdSettings,
   MdBarChart,
-  MdAdd
+  MdAdd,
 } from "react-icons/md";
 import { BiBot } from "react-icons/bi";
 import { Button } from "@/components/ui/button";
+import { bot } from "@/lib/Types/getBots";
+import { Spinner } from "@/components/ui/spinner";
+import { toast, Toaster } from "sonner";
 
-interface Bot {
-  id: string;
-  name: string;
-  platform: "telegram" | "discord" | "website" | "instagram" | "whatsapp";
-  type: "chatbot" | "search" | "automation";
-  status: "active" | "paused" | "disabled";
-  messages: number;
-  lastUpdated: string;
-}
 
 const ManageBotsPage = () => {
   // Mock data - replace with real data from your backend
-  const [bots, setBots] = useState<Bot[]>([
-    {
-      id: "1",
-      name: "Customer Support Bot",
-      platform: "telegram",
-      type: "chatbot",
-      status: "active",
-      messages: 1243,
-      lastUpdated: "2 hours ago"
-    },
-    {
-      id: "2",
-      name: "Sales Assistant",
-      platform: "discord",
-      type: "chatbot",
-      status: "active",
-      messages: 856,
-      lastUpdated: "5 hours ago"
-    },
-    {
-      id: "3",
-      name: "FAQ Bot",
-      platform: "website",
-      type: "search",
-      status: "paused",
-      messages: 423,
-      lastUpdated: "1 day ago"
-    },
-    {
-      id: "4",
-      name: "Product Search",
-      platform: "telegram",
-      type: "search",
-      status: "active",
-      messages: 2891,
-      lastUpdated: "3 hours ago"
-    },
-    {
-      id: "5",
-      name: "Auto Responder",
-      platform: "whatsapp",
-      type: "automation",
-      status: "disabled",
-      messages: 0,
-      lastUpdated: "3 days ago"
-    },
-  ]);
-
-  const [showMenu, setShowMenu] = useState<string | null>(null);
+  const [bots, setBots] = useState<bot[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [hasNoBots, setHasNoBots] = useState<boolean>(false);
+  const [botLoading, setBotLoading] = useState<boolean>(false);
+  const [noOfBots, setNoOfBots] = useState<number>(0);
 
   const platforms = {
-    telegram: { 
-      name: "Telegram", 
-      icon: FaTelegram, 
-      color: "text-blue-500", 
+    Telegram: {
+      name: "Telegram",
+      icon: FaTelegram,
+      color: "text-blue-500",
       bgColor: "bg-blue-100 dark:bg-blue-950/30",
-      isPaid: false 
+      isPaid: false,
     },
-    discord: { 
-      name: "Discord", 
-      icon: FaDiscord, 
-      color: "text-indigo-500", 
+    Discord: {
+      name: "Discord",
+      icon: FaDiscord,
+      color: "text-indigo-500",
       bgColor: "bg-indigo-100 dark:bg-indigo-950/30",
-      isPaid: false 
+      isPaid: false,
     },
-    website: { 
-      name: "Website", 
-      icon: MdOutlineWeb, 
-      color: "text-green-500", 
+    API: {
+      name: "Website",
+      icon: MdOutlineWeb,
+      color: "text-green-500",
       bgColor: "bg-green-100 dark:bg-green-950/30",
-      isPaid: false 
+      isPaid: false,
     },
-    instagram: { 
-      name: "Instagram", 
-      icon: FaInstagram, 
-      color: "text-pink-500", 
+    Instagram: {
+      name: "Instagram",
+      icon: FaInstagram,
+      color: "text-pink-500",
       bgColor: "bg-pink-100 dark:bg-pink-950/30",
-      isPaid: true 
+      isPaid: true,
     },
-    whatsapp: { 
-      name: "WhatsApp", 
-      icon: FaWhatsapp, 
-      color: "text-emerald-500", 
+    WhatsApp: {
+      name: "WhatsApp",
+      icon: FaWhatsapp,
+      color: "text-emerald-500",
       bgColor: "bg-emerald-100 dark:bg-emerald-950/30",
-      isPaid: true 
+      isPaid: true,
     },
   };
 
   const botTypeLabels = {
     chatbot: "AI Chatbot",
     search: "Search Bot",
-    automation: "Automation"
+    automation: "Automation",
   };
 
-  const getStatusColor = (status: Bot["status"]) => {
+  const getStatusColor = (status: bot["status"]) => {
     switch (status) {
       case "active":
         return "bg-green-500";
@@ -140,12 +86,103 @@ const ManageBotsPage = () => {
     }
   };
 
-  const getStatusLabel = (status: Bot["status"]) => {
+  const getStatusLabel = (status: bot["status"]) => {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
-  // Empty state condition
-  const hasNoBots = bots.length === 0;
+  const fetchBots = async (): Promise<void> => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/getAllBotsForManagePage?cursor=${cursor}`,{
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+      const data = await response.json();
+      console.log("Fetched bots:", data); 
+      if(response.ok){
+        setBots(data.bots);
+        setCursor(data.cursor);
+        setHasMore(data.hasMore);
+        setHasMore(false);
+        setHasMore(data.hasMore);
+        setNoOfBots(data.totalBots);
+      }
+    } catch (e) {
+      console.error("Error fetching bots:", e);
+    }
+    finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadMoreBots = async() : Promise<void> =>{
+    try{
+      setBotLoading(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/getAllBotsForManagePage?cursor=${cursor}`,{
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+      const data = await response.json();
+      if(response.ok){
+        setBots([...bots, ...data.bots]);
+        setCursor(data.cursor);
+        setHasMore(data.hasMore);
+      }
+    
+    }
+    catch(e){
+      console.error("Error loading more bots:", e);
+    }
+    finally{
+      setBotLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchBots();
+  }, []);
+
+
+  const deleteBot = async(botId: string) : Promise<void> =>{
+    try{
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/deleteBot`,{
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({botId}),
+      });
+      const data = await response.json();
+      console.log( data);
+      if(response.ok){
+        setBots(bots.filter((bot) => bot._id !== botId));
+        toast.success("Bot deleted successfully");
+        setNoOfBots(noOfBots - 1);
+      }
+    }
+    catch(e){
+      console.error("Error deleting bot:", e);
+    }
+  }
+
+  if(isLoading){
+    return (
+      <div className="w-screen h-screen flex justify-center items-center">
+        <Button>
+          <Spinner className="mr-2" />
+          Loading Bots...
+        </Button>
+      </div>
+    )
+  }
+
 
   if (hasNoBots) {
     return (
@@ -171,7 +208,8 @@ const ManageBotsPage = () => {
             No bots yet
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6 font-inter text-center max-w-md">
-            You have not created any bots yet. Get started by creating your first bot and deploying it to your favorite platform.
+            You have not created any bots yet. Get started by creating your
+            first bot and deploying it to your favorite platform.
           </p>
           <Link href="/CreateBots">
             <Button className="px-6 py-5 bg-pink-600 hover:bg-pink-700 text-white font-inter">
@@ -186,6 +224,8 @@ const ManageBotsPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
+      
+      <Toaster position="top-right" duration={3000} richColors />
       {/* Header Section */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -207,25 +247,36 @@ const ManageBotsPage = () => {
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 rounded-xl p-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400 font-inter mb-1">Total Bots</p>
-          <p className="text-2xl font-semibold text-gray-900 dark:text-white font-outfit">{bots.length}</p>
-        </div>
-        <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 rounded-xl p-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400 font-inter mb-1">Active</p>
-          <p className="text-2xl font-semibold text-green-600 dark:text-green-400 font-outfit">
-            {bots.filter(b => b.status === "active").length}
+          <p className="text-sm text-gray-600 dark:text-gray-400 font-inter mb-1">
+            Total Bots
           </p>
-        </div>
-        <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 rounded-xl p-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400 font-inter mb-1">Paused</p>
-          <p className="text-2xl font-semibold text-yellow-600 dark:text-yellow-400 font-outfit">
-            {bots.filter(b => b.status === "paused").length}
-          </p>
-        </div>
-        <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 rounded-xl p-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400 font-inter mb-1">Total Messages</p>
           <p className="text-2xl font-semibold text-gray-900 dark:text-white font-outfit">
-            {bots.reduce((acc, bot) => acc + bot.messages, 0).toLocaleString()}
+            {noOfBots}
+          </p>
+        </div>
+        <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 rounded-xl p-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 font-inter mb-1">
+            Active
+          </p>
+          <p className="text-2xl font-semibold text-green-600 dark:text-green-400 font-outfit">
+            {bots.filter((b) => b.status === "active").length}
+          </p>
+        </div>
+        <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 rounded-xl p-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 font-inter mb-1">
+            Paused
+          </p>
+          <p className="text-2xl font-semibold text-yellow-600 dark:text-yellow-400 font-outfit">
+            {bots.filter((b) => b.status === "paused").length}
+          </p>
+        </div>
+        <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 rounded-xl p-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 font-inter mb-1">
+            Total Messages
+          </p>
+          <p className="text-2xl font-semibold text-gray-900 dark:text-white font-outfit">
+            {/*{bots.reduce((acc, bot) => acc + bot.messages, 0).toLocaleString()}*/}
+            2200
           </p>
         </div>
       </div>
@@ -233,12 +284,13 @@ const ManageBotsPage = () => {
       {/* Bot Cards Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {bots.map((bot) => {
-          const platform = platforms[bot.platform];
+          const current = bot.platform[0] as keyof typeof platforms;
+          const platform = platforms[current];
           const PlatformIcon = platform.icon;
 
           return (
             <div
-              key={bot.id}
+              key={bot._id}
               className="bg-white cursor-pointer dark:bg-stone-900 border border-gray-200 dark:border-stone-800 rounded-xl p-6 hover:border-gray-300 dark:hover:border-stone-700 transition-all hover:shadow-lg"
             >
               {/* Bot Header */}
@@ -249,7 +301,7 @@ const ManageBotsPage = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-outfit truncate">
-                      {bot.name}
+                      {bot.botName}
                     </h3>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className="text-sm text-gray-600 dark:text-gray-400 font-inter">
@@ -262,15 +314,19 @@ const ManageBotsPage = () => {
                       )}
                       <span className="text-gray-400">•</span>
                       <span className="text-sm text-gray-600 dark:text-gray-400 font-inter">
-                        {botTypeLabels[bot.type]}
+                        {botTypeLabels[bot.purpose]}
                       </span>
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Status Badge */}
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-stone-800 rounded-full">
-                  <span className={`w-2 h-2 rounded-full ${getStatusColor(bot.status)} ${bot.status === 'active' ? 'animate-pulse' : ''}`} />
+                  <span
+                    className={`w-2 h-2 rounded-full ${getStatusColor(
+                      bot.status
+                    )} ${bot.status === "active" ? "animate-pulse" : ""}`}
+                  />
                   <span className="text-xs font-medium text-gray-700 dark:text-gray-300 font-inter">
                     {getStatusLabel(bot.status)}
                   </span>
@@ -280,38 +336,48 @@ const ManageBotsPage = () => {
               {/* Bot Stats */}
               <div className="flex items-center gap-4 mb-4 py-3 border-y border-gray-200 dark:border-stone-800">
                 <div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 font-inter">Messages</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-inter">
+                    Messages
+                  </p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white font-outfit">
-                    {bot.messages.toLocaleString()}
+                    {/* {bot.messages.toLocaleString()} */}
+                    1231
                   </p>
                 </div>
                 <div className="w-px h-10 bg-gray-200 dark:bg-stone-800" />
                 <div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 font-inter">Last Updated</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-inter">
+                    Last Updated
+                  </p>
                   <p className="text-sm text-gray-900 dark:text-white font-inter">
-                    {bot.lastUpdated}
+                    {bot.updated_at.toLocaleString().slice(0, 10)}
                   </p>
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full justify-start gap-2 text-black dark:text-white font-inter border-gray-300 dark:border-stone-700"
                 >
                   <MdSettings className="w-4 h-4" />
                   Configure
                 </Button>
                 <Button 
-                  variant="outline" 
-                  className="w-full justify-start gap-2 font-inter text-black dark:text-white border-gray-300 dark:border-stone-700"
+                onClick={()=>{
+                  if(bot.status!=="active")
+                    toast.error("Complete the bot configration to unlock analytics.")
+                  else
+                    toast.success("Analytics coming soon!")
+                }}
+                  className={`w-full justify-start gap-2 font-inter  ${bot.status === "active" ? "text-black dark:text-white border-gray-300 dark:border-stone-700" : "text-green-500 dark:text-gray-500 border-gray-300 dark:bg-stone-800 cursor-not-allowed"} `}
                 >
                   <MdBarChart className="w-4 h-4" />
                   Analytics
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full justify-start gap-2 font-inter text-black dark:text-white border-gray-300 dark:border-stone-700"
                 >
                   {bot.status === "active" ? (
@@ -326,8 +392,9 @@ const ManageBotsPage = () => {
                     </>
                   )}
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  onClick={()=>deleteBot(bot._id)}
+                  variant="outline"
                   className="w-full justify-start gap-2 text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 font-inter border-gray-300 dark:border-stone-700"
                 >
                   <MdDelete className="w-4 h-4" />
@@ -337,6 +404,9 @@ const ManageBotsPage = () => {
             </div>
           );
         })}
+      </div>
+      <div onClick={loadMoreBots} className={`w-full ${!hasMore ? "hidden" : "flex"}  justify-center items-center bg-pink-50 dark:bg-stone-950`}>
+          <Button size="lg" className=" bg-green-700 hover:bg-green-800 cursor-pointer">{botLoading ? <div className="flex gap-2"><Spinner/>Loading</div> : "Load More"}</Button>
       </div>
     </div>
   );

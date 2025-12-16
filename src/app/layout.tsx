@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Outfit, Space_Grotesk, Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import { Provider } from "./provider";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const outfit = Outfit({
   variable: "--font-outfit",

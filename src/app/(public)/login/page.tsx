@@ -41,7 +41,7 @@ const LoginPage = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const response = await fetch("http://localhost:9000/api/auth/generateOTPForLogin", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/generateOTPForLogin`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -74,7 +74,7 @@ const LoginPage = () => {
       return;
     }
 
-    const response = await fetch("http://localhost:9000/api/auth/LoginWithOTP",{
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/LoginWithOTP`,{
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -106,7 +106,7 @@ const LoginPage = () => {
     setIsLoading(true);
 
     const response = await fetch(
-      "http://localhost:9000/api/auth/loginByPassword",
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/loginByPassword`,
       {
         method: "POST",
         headers: {
@@ -139,7 +139,7 @@ const LoginPage = () => {
   };
 
 const handleGoogleLogin = async() => {
-    const response = await fetch('http://localhost:9000/api/auth/googleOAuth');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/googleOAuth`);
     const data = await response.json();
     if(response.ok){
       window.location.href = data.url;
@@ -150,7 +150,7 @@ const handleGoogleLogin = async() => {
 };
 
   const handleGithubLogin = async () => {
-    const response = await fetch('http://localhost:9000/api/auth/githubOAuth');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/githubOAuth`);
     const data = await response.json();
     if(response.ok){
       window.location.href = data.url;

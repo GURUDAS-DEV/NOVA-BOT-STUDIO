@@ -66,7 +66,7 @@ const SignupPage = () => {
 
     //sending OTP request to server :
     const response = await fetch(
-      "http://localhost:9000/api/auth/OTPGeneration",
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/OTPGeneration`,
       {
         method: "POST",
         credentials: "include",
@@ -108,7 +108,7 @@ const SignupPage = () => {
     }
 
     //sending registration request to server :
-    const response = await fetch("http://localhost:9000/api/auth/register", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/register`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -137,7 +137,7 @@ const SignupPage = () => {
   };
 
   const handleGoogleSignup = async () => {
-    const response = await fetch("http://localhost:9000/api/auth/googleOAuth");
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/googleOAuth`);
     const data = await response.json();
     if (response.ok) {
       window.location.href = data.url;
@@ -150,7 +150,7 @@ const SignupPage = () => {
   };
 
   const handleGithubSignup = async () => {
-    const response = await fetch("http://localhost:9000/api/auth/githubOAuth");
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/githubOAuth`);
     const data = await response.json();
     if (response.ok) {
       window.location.href = data.url;
