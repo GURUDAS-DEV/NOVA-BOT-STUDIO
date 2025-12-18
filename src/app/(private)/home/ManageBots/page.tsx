@@ -163,8 +163,11 @@ const ManageBotsPage = () => {
       console.log( data);
       if(response.ok){
         setBots(bots.filter((bot) => bot._id !== botId));
-        toast.success("Bot deleted successfully");
+        toast.success("Bot Moved to Recycle Bin! You can restore it within 30 days.");
         setNoOfBots(noOfBots - 1);
+      }
+      else{
+        toast.error( "Unexpected error occurred. Please try again later.");
       }
     }
     catch(e){
@@ -211,7 +214,7 @@ const ManageBotsPage = () => {
             You have not created any bots yet. Get started by creating your
             first bot and deploying it to your favorite platform.
           </p>
-          <Link href="/CreateBots">
+          <Link href="/home/CreateBots">
             <Button className="px-6 py-5 bg-pink-600 hover:bg-pink-700 text-white font-inter">
               <MdAdd className="w-5 h-5 mr-2" />
               Create Your First Bot
@@ -236,7 +239,7 @@ const ManageBotsPage = () => {
             Manage, monitor, and configure your bots
           </p>
         </div>
-        <Link href="/CreateBots">
+        <Link href="/home/CreateBots">
           <Button className="px-6 py-5 bg-pink-600 hover:bg-pink-700 text-white font-inter whitespace-nowrap">
             <MdAdd className="w-5 h-5 mr-2" />
             Create New Bot
@@ -284,9 +287,15 @@ const ManageBotsPage = () => {
       {/* Bot Cards Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {bots.map((bot) => {
-          const current = bot.platform[0] as keyof typeof platforms;
-          const platform = platforms[current];
-          const PlatformIcon = platform.icon;
+          // Debug: log the platform value
+          console.log("Bot platform:", bot.platform, "Type:", typeof bot.platform);
+          
+          const platformKey = bot.platform as keyof typeof platforms;
+          const platform = platforms[platformKey];
+          const PlatformIcon = platform?.icon || BiBot;
+          
+          // Debug: log if platform was found
+          console.log("Platform found:", !!platform, "Platform data:", platform);
 
           return (
             <div
@@ -296,8 +305,8 @@ const ManageBotsPage = () => {
               {/* Bot Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start gap-3 flex-1">
-                  <div className={`p-3 ${platform.bgColor} rounded-lg`}>
-                    <PlatformIcon className={`w-6 h-6 ${platform.color}`} />
+                  <div className={`p-3 ${platform?.bgColor || 'bg-gray-100 dark:bg-gray-800'} rounded-lg`}>
+                    <PlatformIcon className={`w-6 h-6 ${platform?.color || 'text-gray-500'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-outfit truncate">
@@ -305,16 +314,16 @@ const ManageBotsPage = () => {
                     </h3>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className="text-sm text-gray-600 dark:text-gray-400 font-inter">
-                        {platform.name}
+                        {platform?.name}
                       </span>
-                      {platform.isPaid && (
+                      {platform?.isPaid && (
                         <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded-full">
                           Pro
                         </span>
                       )}
                       <span className="text-gray-400">•</span>
                       <span className="text-sm text-gray-600 dark:text-gray-400 font-inter">
-                        {botTypeLabels[bot.purpose]}
+                        {botTypeLabels[bot?.purpose]}
                       </span>
                     </div>
                   </div>

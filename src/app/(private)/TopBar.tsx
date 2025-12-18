@@ -12,7 +12,8 @@ import { CiMoneyCheck1 } from "react-icons/ci"
 const TopBar = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const {email, username} = useAuthStore();
+  const {email, username, refreshUser} = useAuthStore();
+  
 
   const {theme, setTheme} = useTheme();
 
@@ -25,6 +26,28 @@ const TopBar = () => {
     document.addEventListener("mousedown", onClickOutside)
     return () => document.removeEventListener("mousedown", onClickOutside)
   }, [])
+
+  const logout = async() => {
+    try{
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/logout`,{
+          method : "POST",
+          credentials: 'include',
+          headers : {
+            'Content-Type' : 'application/json'
+          }
+        });
+        const data = await response.json();
+
+        if(response.ok){
+          // Redirect to login page
+          window.location.href = '/login';
+        }
+    }
+    catch(err){
+      console.error("Logout failed:", err);
+    }
+  }
+
 
   return (
     <div className="w-full mt-8 bg-pink-50 dark:bg-black/60   dark:supports-backdrop-filter:bg-black/50 ">
@@ -117,7 +140,7 @@ const TopBar = () => {
 
                 {/* Logout Section */}
                 <div className="p-2 border-t border-gray-200 dark:border-stone-800">
-                  <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors group">
+                  <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors group">
                     <LogOut className="w-4 h-4" />
                     <span className="font-medium">Log out</span>
                   </button>

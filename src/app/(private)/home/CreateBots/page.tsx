@@ -136,6 +136,7 @@ const CreateBotPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           platform: selectedPlatform,
           intelligenceSource :  dataSource,

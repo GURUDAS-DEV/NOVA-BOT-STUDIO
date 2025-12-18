@@ -16,7 +16,8 @@ import {
   FaTelegram, 
   FaDiscord, 
   FaInstagram, 
-  FaWhatsapp 
+  FaWhatsapp, 
+  FaRecycle
 } from "react-icons/fa"
 import { 
   BiCodeBlock, 
@@ -33,8 +34,8 @@ const Sidebar = () => {
 
   const mainNav = [
     { href: "/home", label: "Home", icon: MdDashboard },
-    { href: "/CreateBots", label: "Create Bots", icon: MdAdd },
-    { href: "/ManageBots", label: "Manage Bots", icon: FaRobot },
+    { href: "/home/CreateBots", label: "Create Bots", icon: MdAdd },
+    { href: "/home/ManageBots", label: "Manage Bots", icon: FaRobot },
   ]
 
   const integrations = [
@@ -118,6 +119,12 @@ const Sidebar = () => {
             label="API Keys"
             icon={BiKey}
             active={isActive("/home/api-keys")}
+          />
+          <NavLink
+            href="/home/RecentlyDeleted"
+            label="Recycle Bin"
+            icon={FaRecycle}
+            active={isActive("/home/RecentlyDeleted")}
           />
         </div>
       </div>

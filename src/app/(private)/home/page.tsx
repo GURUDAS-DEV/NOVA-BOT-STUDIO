@@ -216,7 +216,7 @@ const HomePage = () => {
               >
                 <div className="flex items-center gap-4">
                   <div className="p-2 bg-white dark:bg-stone-900 rounded-lg border border-gray-200 dark:border-stone-700">
-                    {bot.platform[0] == "Telegram" ? (
+                    {bot.platform == "Telegram" ? (
                       <FaTelegram className="w-5 h-5 text-blue-500" />
                     ) : (
                       <FaDiscord className="w-5 h-5 text-indigo-500" />

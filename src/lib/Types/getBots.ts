@@ -11,11 +11,12 @@ export interface bot{
     _id: string;
     userId: string;
     botName: string;
-    platform: Array<"Telegram" | "Discord" | "API" | "Instagram" | "WhatsApp">;
+    platform: "Telegram" | "Discord" | "API" | "Instagram" | "WhatsApp";
     status: "active" | "paused" | "disabled";
     intelligenceSource: string;
     created_at: Date;
     updated_at: Date;
     purpose: "chatbot" | "search" | "automation";
     messages: number;
+    deleted_at?: Date;
 }
