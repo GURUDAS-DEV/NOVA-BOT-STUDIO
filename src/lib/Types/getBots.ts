@@ -12,7 +12,8 @@ export interface bot{
     userId: string;
     botName: string;
     platform: "Telegram" | "Discord" | "API" | "Instagram" | "WhatsApp";
-    status: "active" | "paused" | "disabled";
+    status: "active" | "paused" | "draft" | "deleted";
+    style ?: string;
     intelligenceSource: string;
     created_at: Date;
     updated_at: Date;

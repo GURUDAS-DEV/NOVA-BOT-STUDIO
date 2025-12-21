@@ -17,9 +17,13 @@ import { Button } from "@/components/ui/button";
 import { bot } from "@/lib/Types/getBots";
 import { Spinner } from "@/components/ui/spinner";
 import { toast, Toaster } from "sonner";
+import { useRouter } from 'next/navigation';
+
 
 
 const ManageBotsPage = () => {
+  const router = useRouter();
+
   // Mock data - replace with real data from your backend
   const [bots, setBots] = useState<bot[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -44,7 +48,7 @@ const ManageBotsPage = () => {
       bgColor: "bg-indigo-100 dark:bg-indigo-950/30",
       isPaid: false,
     },
-    API: {
+    Website: {
       name: "Website",
       icon: MdOutlineWeb,
       color: "text-green-500",
@@ -79,7 +83,7 @@ const ManageBotsPage = () => {
         return "bg-green-500";
       case "paused":
         return "bg-yellow-500";
-      case "disabled":
+      case "draft":
         return "bg-gray-400";
       default:
         return "bg-gray-400";
@@ -174,6 +178,19 @@ const ManageBotsPage = () => {
       console.error("Error deleting bot:", e);
     }
   }
+
+  const ActionOfBot = (bot : bot)=>{
+    if(bot.status === "draft"){
+      toast.error("Please setup the bot to Pause or Resume the bot.")
+    }
+  }
+
+  const botMethods = (bot : bot) =>{
+    if(bot.status === "draft"){
+      router.push(`/home/CreateBots/${bot.platform}/${bot.style}?id=${bot._id}`);
+    }
+  }
+
 
   if(isLoading){
     return (
@@ -367,11 +384,21 @@ const ManageBotsPage = () => {
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-2">
                 <Button
+                onClick={()=>botMethods(bot)}
                   variant="outline"
                   className="w-full justify-start gap-2 text-black dark:text-white font-inter border-gray-300 dark:border-stone-700"
-                >
+                >{
+                  bot.status !== "draft" ?
+                  <>
                   <MdSettings className="w-4 h-4" />
                   Configure
+                  </>
+                  :
+                  <>
+                  <MdSettings className="w-4 h-4" />
+                  Setup Bot
+                  </>
+                }
                 </Button>
                 <Button 
                 onClick={()=>{
@@ -386,8 +413,9 @@ const ManageBotsPage = () => {
                   Analytics
                 </Button>
                 <Button
+                  onClick={()=>ActionOfBot(bot)}
                   variant="outline"
-                  className="w-full justify-start gap-2 font-inter text-black dark:text-white border-gray-300 dark:border-stone-700"
+                  className={`w-full  justify-start gap-2 font-inter text-black dark:text-white border-gray-300 dark:border-stone-700 ${bot.status === "draft" ? "text-green-500 dark:text-gray-500 border-gray-300 dark:bg-stone-800 cursor-not-allowed hover:bg-stone-800" : "text-black dark:text-white border-gray-300 dark:border-stone-700"}`}
                 >
                   {bot.status === "active" ? (
                     <>

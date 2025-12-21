@@ -15,17 +15,23 @@ import {
   MdAutoMode,
   MdCheckCircle
 } from "react-icons/md";
-import { BiBot, BiData, BiCloud } from "react-icons/bi";
+import { BiData, BiCloud } from "react-icons/bi";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { useAuthStore } from "@/lib/Store/store";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast, Toaster } from "sonner";
 
 const CreateBotPage = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [botType, setBotType] = useState<string | null>(null);
-  const [dataSource, setDataSource] = useState<string | null>(null);
   const [botName, setBotName] = useState<string>("");
   const [botDescription, setBotDescription] = useState<string>("");
+  const [botStyle, setBotStyle] = useState<string | null>(null);
+  const router = useRouter();
+
+  const searchParams = useSearchParams();
+  const id = searchParams.get('id');
 
   const {userId} =  useAuthStore();
 
@@ -47,7 +53,7 @@ const CreateBotPage = () => {
       isPaid: false 
     },
     { 
-      id: "API", 
+      id: "Website", 
       name: "Website", 
       icon: MdOutlineWeb, 
       color: "text-green-500", 
@@ -96,26 +102,24 @@ const CreateBotPage = () => {
     },
   ];
 
-  const dataSources = [
+  const botStyles = [
     {
-      id: "AI",
-      title: "AI Powered",
-      description: "Use LLM for intelligent responses",
-      icon: Sparkles,
+      id: "FreeStyle",
+      title: "Freestyle",
+      description: "Users can ask any query and the bot will provide answers",
+      icon: MdChat,
+      color: "text-blue-500"
     },
     {
-      id: "DB",
-      title: "Database",
-      description: "Connect your own data source",
-      icon: BiData,
-    },
-    {
-      id: "API",
-      title: "External API",
-      description: "Integrate third-party services",
-      icon: BiCloud,
+      id: "ControlledStyle",
+      title: "Controlled",
+      description: "Users choose from predefined options to interact with the bot",
+      icon: MdAutoMode,
+      color: "text-orange-500"
     },
   ];
+
+
 
   const getPlatformConfig = (platform: string | null) => {
     const configs: Record<string, string> = {
@@ -130,6 +134,32 @@ const CreateBotPage = () => {
 
 
   const createBots = async () : Promise<void>=>{
+    // Validation checks
+    if (!botName.trim()) {
+      console.log("Error: Bot name is required");
+      toast.error("Please provide a bot name");
+      return;
+    }
+
+    if (!selectedPlatform) {
+      console.log("Error: Platform is required");
+      toast.error("Please select a platform");
+      return;
+    }
+
+    if (!botType) {
+      console.log("Error: Bot type is required");
+      toast.error("Please select a bot purpose");
+      return;
+    }
+
+    // If Website platform is selected, bot style is required
+    if (selectedPlatform === "API" && !botStyle) {
+      console.log("Error: Bot style is required for Website platform");
+      toast.error("Please select a bot style");
+      return;
+    }
+
     try{
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/createBot`, {
         method: 'POST',
@@ -139,10 +169,10 @@ const CreateBotPage = () => {
         credentials: 'include',
         body: JSON.stringify({
           platform: selectedPlatform,
-          intelligenceSource :  dataSource,
           purpose : botType,
           botName : botName,
           botDescription : botDescription,
+          style : botStyle,
           userId : userId ,
         }),
       });
@@ -151,7 +181,15 @@ const CreateBotPage = () => {
       if(!response.ok){
         throw new Error(data.message || 'Failed to create bot');
       }
-      console.log("Bot created successfully:", data);
+      else{
+        switch (selectedPlatform) {
+          case "Website" : 
+              router.push(`/home/CreateBots/${selectedPlatform}/${botStyle}?id=${data.id}`);
+              break;             
+        
+        }
+
+      }
 
     }
     catch(e){
@@ -159,8 +197,11 @@ const CreateBotPage = () => {
     }
   }
 
+
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
+      <Toaster position="top-right" richColors />
       {/* Header Section */}
       <div className="space-y-2">
         <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 dark:text-white font-outfit">
@@ -309,51 +350,51 @@ const CreateBotPage = () => {
           </div>
         </div>
 
-        {/* 4. Data Source / Intelligence */}
-        <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 rounded-xl p-6 space-y-5">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 font-outfit">
-              Intelligence Source
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 font-inter">
-              How should your bot generate responses?
-            </p>
-          </div>
+        {/* 4. Bot Style (Only for Website/API) */}
+        {selectedPlatform === "Website" && (
+          <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 rounded-xl p-6 space-y-5">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 font-outfit">
+                Bot Style
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 font-inter">
+                Choose how users will interact with your bot
+              </p>
+            </div>
 
-          <div className="space-y-3">
-            {dataSources.map((source) => {
-              const Icon = source.icon;
-              const isSelected = dataSource === source.id;
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {botStyles.map((style) => {
+                const Icon = style.icon;
+                const isSelected = botStyle === style.id;
 
-              return (
-                <button
-                  key={source.id}
-                  onClick={() => setDataSource(source.id)}
-                  className={`w-full p-4 rounded-xl border-2 flex items-start gap-4 text-left transition-all ${
-                    isSelected
-                      ? "border-pink-500 dark:border-pink-600 bg-pink-50 dark:bg-pink-950/20"
-                      : "border-gray-200 dark:border-stone-800 hover:border-gray-300 dark:hover:border-stone-700"
-                  }`}
-                >
-                  <div className={`p-2 ${isSelected ? 'bg-pink-200 dark:bg-pink-900/40' : 'bg-gray-100 dark:bg-stone-800'} rounded-lg`}>
-                    <Icon className={`w-5 h-5 ${isSelected ? 'text-pink-600 dark:text-pink-400' : 'text-gray-600 dark:text-gray-400'}`} />
-                  </div>
-                  <div className="flex-1">
+                return (
+                  <button
+                    key={style.id}
+                    onClick={() => setBotStyle(style.id)}
+                    className={`p-5 rounded-xl border-2 text-left transition-all relative ${
+                      isSelected
+                        ? "border-pink-500 dark:border-pink-600 bg-pink-50 dark:bg-pink-950/20"
+                        : "border-gray-200 dark:border-stone-800 hover:border-gray-300 dark:hover:border-stone-700"
+                    }`}
+                  >
+                    <Icon className={`w-8 h-8 ${style.color} mb-3`} />
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-1 font-outfit">
-                      {source.title}
+                      {style.title}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 font-inter">
-                      {source.description}
+                      {style.description}
                     </p>
-                  </div>
-                  {isSelected && (
-                    <MdCheckCircle className="w-5 h-5 text-pink-600 dark:text-pink-400 mt-1" />
-                  )}
-                </button>
-              );
-            })}
+                    {isSelected && (
+                      <MdCheckCircle className="absolute top-4 right-4 w-5 h-5 text-pink-600 dark:text-pink-400" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
+
+
 
         {/* 5. Actions */}
         <div className="flex items-center justify-between pt-4">
@@ -364,8 +405,14 @@ const CreateBotPage = () => {
             Cancel
           </Button>
           <Button 
-          onClick={createBots}
-            className="px-8 py-5 bg-pink-600 hover:bg-pink-700 text-white font-inter"
+            onClick={createBots}
+            disabled={
+              !botName.trim() || 
+              !selectedPlatform || 
+              !botType || 
+              (selectedPlatform === "API" && !botStyle)
+            }
+            className="px-8 py-5 bg-pink-600 hover:bg-pink-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-400 text-white font-inter transition-all"
           >
             Create Bot
           </Button>
