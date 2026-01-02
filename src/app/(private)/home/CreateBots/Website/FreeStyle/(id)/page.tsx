@@ -2,13 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -24,7 +18,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Spinner } from "@/components/ui/spinner";
 import { toast, Toaster } from "sonner";
-import { on } from "events";
+import { useAuthStore } from "@/lib/Store/store";
 
 // Types
 type BotType =
@@ -33,6 +27,7 @@ type BotType =
   | "Advisor"
   | "Comparison"
   | "Navigator"
+  | "Hybrid"
   | "";
 type Tone = "Professional" | "Friendly" | "Casual" | "Formal" | "";
 type Verbosity = "Concise" | "Balanced" | "Detailed" | "";
@@ -64,8 +59,8 @@ interface WizardState {
 
   // Step 4
   behaviorDescription: string;
-  allowedTopics: string;
-  disallowedTopics: string;
+  OwnerInformation: string;
+  additionalInformation: string;
 
   // Step 5
   examples: QAPair[];
@@ -75,6 +70,7 @@ interface WizardState {
   // Step 6
   apiEnabled: boolean;
   apiEndpoint: string;
+  apiUsageRules: string;
   responseFormat: string;
   apiTestResult?: string;
   apiTestPassed?: boolean;
@@ -115,6 +111,11 @@ const Step1BotType = ({
       value: "Navigator",
       label: "Navigator",
       description: "Guides users through your website",
+    },
+    {
+      value: "Hybrid",
+      label: "Hybrid",
+      description: "Combines multiple functionalities",
     },
   ];
 
@@ -267,17 +268,22 @@ const Step3WebsiteContext = ({
         </Select>
       </div>
 
-      {value === "Other" && 
-      
-      <div className="w-full flex justify-center flex-col">
-        <label className="font-outfit text-black dark:text-white pb-0.5 text-sm font-medium pl-1" htmlFor="">Please Specify(in minimum 3 words)</label>
-        <Input
-          placeholder="Specify other website type..."
-          value={otherValue}
-          onChange={(e) => onChangeOther(e.target.value)}
-          className="h-8 pl-2 font-outfit  w-[40%] border border-gray-200 dark:bg-black bg-white dark:text-white text-black"
-        />
-      </div>}
+      {value === "Other" && (
+        <div className="w-full flex justify-center flex-col">
+          <label
+            className="font-outfit text-black dark:text-white pb-0.5 text-sm font-medium pl-1"
+            htmlFor=""
+          >
+            Please Specify(in minimum 3 words)
+          </label>
+          <Input
+            placeholder="Specify other website type..."
+            value={otherValue}
+            onChange={(e) => onChangeOther(e.target.value)}
+            className="h-8 pl-2 font-outfit  w-[40%] border border-gray-200 dark:bg-black bg-white dark:text-white text-black"
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -285,20 +291,20 @@ const Step3WebsiteContext = ({
 // Step 4: Bot Behavior
 const Step4Behavior = ({
   description,
-  allowedTopics,
-  disallowedTopics,
+  OwnerInformation,
+  additionalInformation,
   onDescriptionChange,
-  onAllowedTopicsChange,
-  onDisallowedTopicsChange,
+  onOwnerInformationChange,
+  onAdditionalInformationChange,
   validationError,
   isValidating,
 }: {
   description: string;
-  allowedTopics: string;
-  disallowedTopics: string;
+  OwnerInformation: string;
+  additionalInformation: string;
   onDescriptionChange: (value: string) => void;
-  onAllowedTopicsChange: (value: string) => void;
-  onDisallowedTopicsChange: (value: string) => void;
+  onOwnerInformationChange: (value: string) => void;
+  onAdditionalInformationChange: (value: string) => void;
   validationError?: string;
   isValidating?: boolean;
 }) => {
@@ -336,6 +342,7 @@ const Step4Behavior = ({
       }
     } catch (error) {
       toast.error("Something went wrong while enhancing. Please try again.");
+      console.error("Error enhancing text:", error);
     } finally {
       setIsEnhancing(false);
     }
@@ -360,7 +367,7 @@ const Step4Behavior = ({
           Bot Behavior
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Define how your bot should behave and what topics it can discuss
+          Describe about your service and bot behavior and any specific information it should provide when user ask
         </p>
       </div>
 
@@ -463,25 +470,25 @@ const Step4Behavior = ({
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-900 dark:text-white">
-          Allowed Topics
+          Information to Provide by Bot (e.g Contact Details, Website Link etc.)
         </label>
         <Textarea
-          placeholder="List topics the bot can discuss (comma separated)..."
-          value={allowedTopics}
-          onChange={(e) => onAllowedTopicsChange(e.target.value)}
-          className="min-h-[80px] dark:bg-black bg-white dark:text-white text-black"
+          placeholder="List information that bot can provide, E.g : Contact Details, Website Link etc."
+          value={OwnerInformation}
+          onChange={(e) => onOwnerInformationChange(e.target.value)}
+          className="min-h-20 dark:bg-black bg-white dark:text-white text-black"
         />
       </div>
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-900 dark:text-white">
-          Disallowed Topics
+          Additional Information
         </label>
         <Textarea
-          placeholder="List topics the bot should avoid (comma separated)..."
-          value={disallowedTopics}
-          onChange={(e) => onDisallowedTopicsChange(e.target.value)}
-          className="min-h-[80px] dark:bg-black bg-white dark:text-white text-black"
+          placeholder="List Additional Information that bot should return when user ask about anything related to your service"
+          value={additionalInformation}
+          onChange={(e) => onAdditionalInformationChange(e.target.value)}
+          className="min-h-20 dark:bg-black bg-white dark:text-white text-black"
         />
       </div>
     </div>
@@ -505,10 +512,7 @@ const Step5Examples = ({
   isValidating: boolean;
 }) => {
   const addExample = () => {
-    onChange([
-      ...examples,
-      { question: "", answer: "" },
-    ]);
+    onChange([...examples, { question: "", answer: "" }]);
   };
 
   const removeExample = (index: number) => {
@@ -521,7 +525,9 @@ const Step5Examples = ({
     value: string
   ) => {
     onChange(
-      examples.map((ex, idx) => (idx === index ? { ...ex, [field]: value } : ex))
+      examples.map((ex, idx) =>
+        idx === index ? { ...ex, [field]: value } : ex
+      )
     );
   };
 
@@ -533,7 +539,10 @@ const Step5Examples = ({
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
           Provide example question-answer pairs to train your bot
-          <span className="text-yellow-600 dark:text-yellow-300 font-medium"><br></br>Please Provide Atleast 5 Example for better working of your Bot!</span>
+          <span className="text-yellow-600 dark:text-yellow-300 font-medium">
+            <br></br>Please Provide Atleast 5 Example for better working of your
+            Bot!
+          </span>
         </p>
       </div>
 
@@ -583,7 +592,7 @@ const Step5Examples = ({
                   onChange={(e) =>
                     updateExample(index, "answer", e.target.value)
                   }
-                  className="min-h-[80px] dark:bg-black bg-white dark:text-white text-black"
+                  className="min-h-20 dark:bg-black bg-white dark:text-white text-black"
                 />
               </div>
             </CardContent>
@@ -604,7 +613,10 @@ const Step5Examples = ({
       <div className="mt-6 space-y-3">
         <Button
           onClick={onValidate}
-          disabled={isValidating || examples.every(ex => !ex.question.trim() || !ex.answer.trim())}
+          disabled={
+            isValidating ||
+            examples.every((ex) => !ex.question.trim() || !ex.answer.trim())
+          }
           className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100"
         >
           {isValidating ? (
@@ -644,7 +656,8 @@ const Step5Examples = ({
                   Examples Validated Successfully
                 </p>
                 <p className="text-sm text-green-800 dark:text-green-300 mt-1">
-                  Your examples have been validated and you can proceed to the next step.
+                  Your examples have been validated and you can proceed to the
+                  next step.
                 </p>
               </div>
             </div>
@@ -659,17 +672,21 @@ const Step5Examples = ({
 const Step6API = ({
   enabled,
   endpoint,
+  apiUsageRules,
   responseFormat,
   onEnabledChange,
   onEndpointChange,
+  onApiUsageRulesChange,
   onRunTest,
   testResult,
 }: {
   enabled: boolean;
   endpoint: string;
+  apiUsageRules: string;
   responseFormat: string;
   onEnabledChange: (value: boolean) => void;
   onEndpointChange: (value: string) => void;
+  onApiUsageRulesChange: (value: string) => void;
   onResponseFormatChange: (value: string) => void;
   onRunTest: () => Promise<void>;
   testResult?: string;
@@ -682,6 +699,8 @@ const Step6API = ({
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
           Optionally connect an external API for dynamic responses
+          <br></br>
+          For safety reasons, bots can only read data from external systems
         </p>
       </div>
 
@@ -717,6 +736,18 @@ const Step6API = ({
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-900 dark:text-white">
+              API Usage Rules
+            </label>
+            <Textarea
+              placeholder="Specify how to use this API (e.g., For single data: /1, For query parameters: ?name=value&id=123, Authentication: Bearer token required, etc.)..."
+              value={apiUsageRules}
+              onChange={(e) => onApiUsageRulesChange(e.target.value)}
+              className="min-h-[100px] dark:bg-black bg-white dark:text-white text-black"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-900 dark:text-white">
               Response From Given API
             </label>
             <Textarea
@@ -743,7 +774,9 @@ const Step6API = ({
                     : "text-red-600 dark:text-red-400"
                 }`}
               >
-                {testResult}
+                {testResult.includes("Succeeded")
+                  ? "API Test Succeeded!"
+                  : `API Test Failed: ${testResult}`}
               </p>
             )}
           </div>
@@ -779,6 +812,7 @@ const InfoBanner = () => {
 export default function CreateWebsiteBotWizard() {
   const searchParams = useSearchParams();
   const botId = searchParams.get("id") || "";
+  const { userId } = useAuthStore();
   const [doesFound, setDoesfound] = useState<boolean>(false);
   const [botName, setBotName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -793,17 +827,20 @@ export default function CreateWebsiteBotWizard() {
     websiteType: "",
     otherWebsiteType: "",
     behaviorDescription: "",
-    allowedTopics: "",
-    disallowedTopics: "",
+    OwnerInformation: "",
+    additionalInformation: "",
     examples: [{ question: "", answer: "" }],
     examplesValidated: false,
     examplesValidationError: "",
     apiEnabled: false,
     apiEndpoint: "",
+    apiUsageRules: "",
     responseFormat: "",
     apiTestResult: "",
     apiTestPassed: false,
   });
+  const [isFilledUp, setIsFilledUp] = useState<boolean>(false);
+  const [alreadyFilledUp, setAlreadyFilledUp] = useState<boolean>(false);
 
   const fetchBotStructure = async (): Promise<void> => {
     try {
@@ -812,8 +849,17 @@ export default function CreateWebsiteBotWizard() {
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/getOneBotDetails/${botId}`,
         { credentials: "include" }
       );
+      if(response.status === 404){
+        setDoesfound(false);
+        return;
+      }
+      else if(response.status === 405){
+        setAlreadyFilledUp(true);
+        toast.warning("This bot has already been set up. If you want to make changes, please go to the Manage Bots page.");
+        return;
+      }
+
       const data = await response.json();
-      console.log("Fetched bot details:", data);
       if (response.ok) {
         setBotName(data?.bot?.botName || "Custom Bot");
         setDoesfound(true);
@@ -832,80 +878,231 @@ export default function CreateWebsiteBotWizard() {
     fetchBotStructure();
   }, [botId]);
 
+  if (isFilledUp || alreadyFilledUp) {
+    return (
+      <div className="min-h-screen bg-pink-50 dark:bg-stone-950 py-8 px-4 flex items-center justify-center">
+        <Toaster position="top-right" richColors />
+        <div className="max-w-2xl w-full">
+          <Card className="bg-white dark:bg-stone-900 border-gray-200 dark:border-stone-800 shadow-lg">
+            <CardContent className="p-12 text-center">
+              {/* Success Icon */}
+              <div className="mb-6 flex justify-center">
+                <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-6">
+                  <svg
+                    className="h-16 w-16 text-green-600 dark:text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Success Message */}
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+               Bot Setup Completed Successfully! 🎉
+              </h2>
+              <p className="text-lg text-gray-700 dark:text-gray-300 mb-8">
+                Your bot{" "}
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  {botName}
+                </span>{" "}
+                is now ready to serve your customers.
+              </p>
+
+              {/* Information Cards */}
+              <div className="grid gap-4 mb-8 text-left">
+                <div className="rounded-lg border border-gray-200 dark:border-stone-700 bg-gray-50 dark:bg-stone-800/50 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="text-blue-600 dark:text-blue-400 mt-0.5">
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                        Next Steps
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Go to the Manage Bots page to activate your bot and
+                        start serving your customers. You can also customize
+                        additional settings and monitor bot performance.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-gray-200 dark:border-stone-700 bg-gray-50 dark:bg-stone-800/50 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="text-purple-600 dark:text-purple-400 mt-0.5">
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                        Bot is Currently Inactive
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Your bot has been configured but is not yet active.
+                        Visit the Manage page to start the bot service and make
+                        it live on your website.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link href="/home/ManageBots" className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 px-8 py-6 text-base font-semibold">
+                    Go to Manage Bots
+                  </Button>
+                </Link>
+                <Link href="/home/CreateBots" className="w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    className="w-full sm:w-auto bg-white dark:bg-stone-900 text-gray-900 dark:text-white border-gray-300 dark:border-stone-700 hover:bg-gray-100 dark:hover:bg-stone-800 px-8 py-6 text-base"
+                  >
+                    Create Another Bot
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   // Dummy function to validate examples - implement your validation logic here
   const validateExamples = async (): Promise<void> => {
-    try{
-      if(wizardState.examples.length === 0){
+    try {
+      if (wizardState.examples.length === 0) {
         toast.error("Please add at least one example to validate.");
         return;
-      }
-      else if(wizardState.examples.length < 5){
-        toast.warning("It's recommended to add at least 5 examples for better Working of your Bot!.");
+      } else if (wizardState.examples.length < 5) {
+        toast.warning(
+          "It's recommended to add at least 5 examples for better Working of your Bot!."
+        );
       }
       setIsValidatingExamples(true);
-      console.log("Validating examples:", wizardState.examples);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/aiFeatures/ValidateExample`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ examples: wizardState.examples, botType : wizardState.botType } ),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/aiFeatures/ValidateExample`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            examples: wizardState.examples,
+            botType: wizardState.botType,
+          }),
+        }
+      );
       const data = await response.json();
-      if(!response.ok){
-        toast.error(data?.message || "Failed to validate examples. Please try again later.");
-        console.log("Examples validation failed:", data);
+      if (!response.ok) {
+        toast.error(
+          data?.message ||
+            "Failed to validate examples. Please try again later."
+        );
         return;
       }
-      console.log("Examples validation response:", data);
       const realData = JSON.parse(data?.message || "{}");
-      if(realData?.isValid){
+      if (realData?.isValid) {
         setWizardState((prev) => ({
           ...prev,
           examplesValidated: true,
         }));
-        toast.success("Examples validated successfully! You can proceed to the next step.");
-      }
-      else{
+        toast.success(
+          "Examples validated successfully! You can proceed to the next step."
+        );
+      } else {
         setWizardState((prev) => ({
           ...prev,
           examplesValidated: false,
-          examplesValidationError : realData?.reasons || "Examples validation failed due to unknown reasons.",
+          examplesValidationError:
+            realData?.reasons ||
+            "Examples validation failed due to unknown reasons.",
         }));
-        console.log("Examples validation errors:", data);
-        console.log("Examples validation errors:", realData?.reasons);
-        toast.error("Examples validation failed. Please check the errors and try again.");
+        toast.error(
+          "Examples validation failed. Please check the errors and try again."
+        );
       }
-
-    }
-    catch (error) {
-      toast.error("An unexpected error occurred during examples validation. Please try again.");
+    } catch (error) {
+      toast.error(
+        "An unexpected error occurred during examples validation. Please try again."
+      );
       console.log("Error validating examples:", error);
-    }    
-    finally {
+    } finally {
       setIsValidatingExamples(false);
     }
   };
 
   const runApiTest = async (): Promise<void> => {
-    if ( wizardState.apiEndpoint.includes("localhost") || wizardState.apiEndpoint.startsWith("file://")) {
+    if (
+      wizardState.apiEndpoint.includes("localhost") ||
+      wizardState.apiEndpoint.startsWith("file://")
+    ) {
       setWizardState((prev) => ({
         ...prev,
         apiTestPassed: false,
-        apiTestResult: "API Test Failed: Localhost or file:// endpoints are not accessible from our servers.",
+        apiTestResult:
+          "API Test Failed: Localhost or file:// endpoints are not accessible from our servers.",
       }));
-      toast.error( "API Test Failed! Localhost or file:// endpoints are not accessible from our servers." );
+      toast.error(
+        "API Test Failed! Localhost or file:// endpoints are not accessible from our servers."
+      );
       return;
     }
-    
+
     try {
       setIsValidating(true);
       setValidationError("");
 
-      const response = await fetch(wizardState.apiEndpoint, { method: "GET" });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/botConfig/testUserGivenApi`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ apiEndpoint: wizardState.apiEndpoint }),
+        }
+      );
+      const data = await response.json();
       if (!response.ok) {
         setWizardState((prev) => ({
           ...prev,
+          apiTestPassed: false,
+          responseFormat : "",
           apiTestResult: `API Test Failed: Received status ${response.status}`,
         }));
 
@@ -914,8 +1111,6 @@ export default function CreateWebsiteBotWizard() {
         );
         return;
       }
-
-      const data = await response.json();
       setWizardState((prev) => ({
         ...prev,
         apiTestPassed: true,
@@ -1001,9 +1196,11 @@ export default function CreateWebsiteBotWizard() {
       case 2:
         return wizardState.tone !== "" && wizardState.verbosity !== "";
       case 3:
-        return wizardState.websiteType !== "" &&
+        return (
+          wizardState.websiteType !== "" &&
           (wizardState.websiteType !== "Other" ||
-            wizardState.otherWebsiteType.trim().length >= 3);
+            wizardState.otherWebsiteType.trim().length >= 3)
+        );
       case 4:
         return wizardState.behaviorDescription.trim().length >= 100;
       case 5:
@@ -1034,7 +1231,7 @@ export default function CreateWebsiteBotWizard() {
           },
           body: JSON.stringify({
             text: wizardState.behaviorDescription,
-            botType : wizardState.botType,
+            botType: wizardState.botType,
           }),
           credentials: "include",
         }
@@ -1067,6 +1264,42 @@ export default function CreateWebsiteBotWizard() {
     }
   };
 
+  const sendWebsiteBotConfig = async (): Promise<void> => {
+    try{
+      setLoading(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/botConfig/setConfig`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId, botId, botStyle : "free-style", botType : wizardState.botType, websiteType: wizardState.websiteType, otherWebsiteType: wizardState.otherWebsiteType, tone: wizardState.tone, verbosity: wizardState.verbosity, behaviorDescription: wizardState.behaviorDescription, OwnerInformation : wizardState.OwnerInformation, additionalInformation : wizardState.additionalInformation, examples: wizardState.examples, apiEnabled: wizardState.apiEnabled, apiEndpoint: wizardState.apiEndpoint, apiUsageRules: wizardState.apiUsageRules, responseFormat: wizardState.responseFormat }),
+      }
+    );
+
+    if(response.ok){
+      setIsFilledUp(true);
+    }
+    else{
+      if(response.status == 405){
+        setAlreadyFilledUp(true);
+        toast.warning("This bot has already been set up. If you want to make changes, please go to the Manage Bots page.");
+      }
+      else{
+        const data = await response.json();
+        toast.error(data?.message || "Failed to submit bot configuration. Please try again later.");
+      }
+    }
+
+    }
+    catch(e){
+      console.error("Error in setting loading state:", e);
+    }
+    finally{
+      setLoading(false);
+    }
+
+  }
+
   const handleNext = async () => {
     if (validateStep(currentStep)) {
       // Special validation for Step 4 with API call
@@ -1083,7 +1316,7 @@ export default function CreateWebsiteBotWizard() {
       } else {
         // Final submission
         console.log("Submitting wizard data:", wizardState);
-        alert("Bot created successfully! (This is a demo)");
+        sendWebsiteBotConfig();
       }
     }
   };
@@ -1160,16 +1393,16 @@ export default function CreateWebsiteBotWizard() {
             {currentStep === 4 && (
               <Step4Behavior
                 description={wizardState.behaviorDescription}
-                allowedTopics={wizardState.allowedTopics}
-                disallowedTopics={wizardState.disallowedTopics}
+                OwnerInformation={wizardState.OwnerInformation}
+                additionalInformation={wizardState.additionalInformation}
                 onDescriptionChange={(val) =>
                   updateState("behaviorDescription", val)
                 }
-                onAllowedTopicsChange={(val) =>
-                  updateState("allowedTopics", val)
+                onOwnerInformationChange={(val) =>
+                  updateState("OwnerInformation", val)
                 }
-                onDisallowedTopicsChange={(val) =>
-                  updateState("disallowedTopics", val)
+                onAdditionalInformationChange={(val) =>
+                  updateState("additionalInformation", val)
                 }
                 validationError={validationError}
                 isValidating={isValidating}
@@ -1196,9 +1429,13 @@ export default function CreateWebsiteBotWizard() {
               <Step6API
                 enabled={wizardState.apiEnabled}
                 endpoint={wizardState.apiEndpoint}
+                apiUsageRules={wizardState.apiUsageRules}
                 responseFormat={wizardState.responseFormat}
                 onEnabledChange={(val) => updateState("apiEnabled", val)}
                 onEndpointChange={(val) => updateState("apiEndpoint", val)}
+                onApiUsageRulesChange={(val) =>
+                  updateState("apiUsageRules", val)
+                }
                 onResponseFormatChange={(val) =>
                   updateState("responseFormat", val)
                 }

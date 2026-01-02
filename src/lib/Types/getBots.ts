@@ -12,7 +12,7 @@ export interface bot{
     userId: string;
     botName: string;
     platform: "Telegram" | "Discord" | "API" | "Instagram" | "WhatsApp";
-    status: "active" | "paused" | "draft" | "deleted";
+    status: "active" | "paused" | "draft" | "deleted" | "inactive";
     style ?: string;
     intelligenceSource: string;
     created_at: Date;

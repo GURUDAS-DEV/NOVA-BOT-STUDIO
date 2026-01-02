@@ -12,14 +12,13 @@ import {
   MdBarChart,
   MdAdd,
 } from "react-icons/md";
+import { GiPowerButton } from "react-icons/gi";
 import { BiBot } from "react-icons/bi";
 import { Button } from "@/components/ui/button";
 import { bot } from "@/lib/Types/getBots";
 import { Spinner } from "@/components/ui/spinner";
 import { toast, Toaster } from "sonner";
-import { useRouter } from 'next/navigation';
-
-
+import { useRouter } from "next/navigation";
 
 const ManageBotsPage = () => {
   const router = useRouter();
@@ -97,16 +96,19 @@ const ManageBotsPage = () => {
   const fetchBots = async (): Promise<void> => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/getAllBotsForManagePage?cursor=${cursor}`,{
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/getAllBotsForManagePage?cursor=${cursor}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        }
+      );
       const data = await response.json();
-      console.log("Fetched bots:", data); 
-      if(response.ok){
+      console.log("Fetched bots:", data);
+      if (response.ok) {
         setBots(data.bots);
         setCursor(data.cursor);
         setHasMore(data.hasMore);
@@ -116,83 +118,128 @@ const ManageBotsPage = () => {
       }
     } catch (e) {
       console.error("Error fetching bots:", e);
-    }
-    finally {
+    } finally {
       setIsLoading(false);
     }
   };
 
-  const loadMoreBots = async() : Promise<void> =>{
-    try{
+  const loadMoreBots = async (): Promise<void> => {
+    try {
       setBotLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/getAllBotsForManagePage?cursor=${cursor}`,{
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/getAllBotsForManagePage?cursor=${cursor}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        }
+      );
       const data = await response.json();
-      if(response.ok){
+      if (response.ok) {
         setBots([...bots, ...data.bots]);
         setCursor(data.cursor);
         setHasMore(data.hasMore);
       }
-    
-    }
-    catch(e){
+    } catch (e) {
       console.error("Error loading more bots:", e);
-    }
-    finally{
+    } finally {
       setBotLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     fetchBots();
   }, []);
 
-
-  const deleteBot = async(botId: string) : Promise<void> =>{
-    try{
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/deleteBot`,{
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({botId}),
-      });
+  const deleteBot = async (botId: string): Promise<void> => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/deleteBot`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ botId }),
+        }
+      );
       const data = await response.json();
-      console.log( data);
-      if(response.ok){
+      console.log(data);
+      if (response.ok) {
         setBots(bots.filter((bot) => bot._id !== botId));
-        toast.success("Bot Moved to Recycle Bin! You can restore it within 30 days.");
+        toast.success(
+          "Bot Moved to Recycle Bin! You can restore it within 30 days."
+        );
         setNoOfBots(noOfBots - 1);
+      } else {
+        toast.error("Unexpected error occurred. Please try again later.");
       }
-      else{
-        toast.error( "Unexpected error occurred. Please try again later.");
-      }
-    }
-    catch(e){
+    } catch (e) {
       console.error("Error deleting bot:", e);
     }
-  }
+  };
 
-  const ActionOfBot = (bot : bot)=>{
-    if(bot.status === "draft"){
-      toast.error("Please setup the bot to Pause or Resume the bot.")
+  const ActionOfBot = (bot: bot) => {
+    if (bot.status === "draft") {
+      toast.error("Please setup the bot to Pause or Resume the bot.");
     }
-  }
+  };
 
-  const botMethods = (bot : bot) =>{
-    if(bot.status === "draft"){
-      router.push(`/home/CreateBots/${bot.platform}/${bot.style}?id=${bot._id}`);
+  const botMethods = (bot: bot) => {
+    if (bot.status === "draft") {
+      router.push(
+        `/home/CreateBots/${bot.platform}/${bot.style}?id=${bot._id}`
+      );
     }
-  }
+  };
 
+  const botStatusShow = (bot: bot) => {
+    const status = bot.status;
 
-  if(isLoading){
+    switch (status) {
+      case "inactive":
+        return (
+          <>
+            <GiPowerButton className="w-4 h-4" />
+            Start
+          </>
+        );
+      case "active":
+        return (
+          <>
+            <MdPause className="w-4 h-4" />
+            Pause
+          </>
+        );
+      case "paused":
+        return (
+          <>
+            <MdPlayArrow className="w-4 h-4" />
+            Resume
+          </>
+        );
+        case "draft":
+        return (
+          <>
+          <GiPowerButton className="w-4 h-4" />
+          Setup Required
+          </>
+        );
+
+        default:
+        return (
+          <>
+            <GiPowerButton className="w-4 h-4" />
+            Start
+          </>
+        );
+    }
+  };
+
+  if (isLoading) {
     return (
       <div className="w-screen h-screen flex justify-center items-center">
         <Button>
@@ -200,9 +247,8 @@ const ManageBotsPage = () => {
           Loading Bots...
         </Button>
       </div>
-    )
+    );
   }
-
 
   if (hasNoBots) {
     return (
@@ -244,7 +290,6 @@ const ManageBotsPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
-      
       <Toaster position="top-right" duration={3000} richColors />
       {/* Header Section */}
       <div className="flex items-start justify-between gap-4">
@@ -305,14 +350,24 @@ const ManageBotsPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {bots.map((bot) => {
           // Debug: log the platform value
-          console.log("Bot platform:", bot.platform, "Type:", typeof bot.platform);
-          
+          console.log(
+            "Bot platform:",
+            bot.platform,
+            "Type:",
+            typeof bot.platform
+          );
+
           const platformKey = bot.platform as keyof typeof platforms;
           const platform = platforms[platformKey];
           const PlatformIcon = platform?.icon || BiBot;
-          
+
           // Debug: log if platform was found
-          console.log("Platform found:", !!platform, "Platform data:", platform);
+          console.log(
+            "Platform found:",
+            !!platform,
+            "Platform data:",
+            platform
+          );
 
           return (
             <div
@@ -322,8 +377,16 @@ const ManageBotsPage = () => {
               {/* Bot Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start gap-3 flex-1">
-                  <div className={`p-3 ${platform?.bgColor || 'bg-gray-100 dark:bg-gray-800'} rounded-lg`}>
-                    <PlatformIcon className={`w-6 h-6 ${platform?.color || 'text-gray-500'}`} />
+                  <div
+                    className={`p-3 ${
+                      platform?.bgColor || "bg-gray-100 dark:bg-gray-800"
+                    } rounded-lg`}
+                  >
+                    <PlatformIcon
+                      className={`w-6 h-6 ${
+                        platform?.color || "text-gray-500"
+                      }`}
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-outfit truncate">
@@ -384,53 +447,52 @@ const ManageBotsPage = () => {
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-2">
                 <Button
-                onClick={()=>botMethods(bot)}
+                  onClick={() => botMethods(bot)}
                   variant="outline"
                   className="w-full justify-start gap-2 text-black dark:text-white font-inter border-gray-300 dark:border-stone-700"
-                >{
-                  bot.status !== "draft" ?
-                  <>
-                  <MdSettings className="w-4 h-4" />
-                  Configure
-                  </>
-                  :
-                  <>
-                  <MdSettings className="w-4 h-4" />
-                  Setup Bot
-                  </>
-                }
+                >
+                  {bot.status !== "draft" ? (
+                    <>
+                      <MdSettings className="w-4 h-4" />
+                      Configure
+                    </>
+                  ) : (
+                    <>
+                      <MdSettings className="w-4 h-4" />
+                      Setup Bot
+                    </>
+                  )}
                 </Button>
-                <Button 
-                onClick={()=>{
-                  if(bot.status!=="active")
-                    toast.error("Complete the bot configration to unlock analytics.")
-                  else
-                    toast.success("Analytics coming soon!")
-                }}
-                  className={`w-full justify-start gap-2 font-inter  ${bot.status === "active" ? "text-black dark:text-white border-gray-300 dark:border-stone-700" : "text-green-500 dark:text-gray-500 border-gray-300 dark:bg-stone-800 cursor-not-allowed"} `}
+                <Button
+                  onClick={() => {
+                    if (bot.status !== "active")
+                      toast.error(
+                        "Complete the bot configration to unlock analytics."
+                      );
+                    else toast.success("Analytics coming soon!");
+                  }}
+                  className={`w-full justify-start gap-2 font-inter  ${
+                    bot.status === "active"
+                      ? "text-black dark:text-white border-gray-300 dark:border-stone-700"
+                      : "text-green-500 dark:text-gray-500 border-gray-300 dark:bg-stone-800 cursor-not-allowed"
+                  } `}
                 >
                   <MdBarChart className="w-4 h-4" />
                   Analytics
                 </Button>
                 <Button
-                  onClick={()=>ActionOfBot(bot)}
+                  onClick={() => ActionOfBot(bot)}
                   variant="outline"
-                  className={`w-full  justify-start gap-2 font-inter text-black dark:text-white border-gray-300 dark:border-stone-700 ${bot.status === "draft" ? "text-green-500 dark:text-gray-500 border-gray-300 dark:bg-stone-800 cursor-not-allowed hover:bg-stone-800" : "text-black dark:text-white border-gray-300 dark:border-stone-700"}`}
+                  className={`w-full  justify-start gap-2 font-inter text-black dark:text-white border-gray-300 dark:border-stone-700 ${
+                    bot.status === "draft"
+                      ? "text-green-500 dark:text-gray-500 border-gray-300 dark:bg-stone-800 cursor-not-allowed hover:bg-stone-800"
+                      : "text-black dark:text-white border-gray-300 dark:border-stone-700"
+                  }`}
                 >
-                  {bot.status === "active" ? (
-                    <>
-                      <MdPause className="w-4 h-4" />
-                      Pause
-                    </>
-                  ) : (
-                    <>
-                      <MdPlayArrow className="w-4 h-4" />
-                      Resume
-                    </>
-                  )}
+                  {botStatusShow(bot)}
                 </Button>
                 <Button
-                  onClick={()=>deleteBot(bot._id)}
+                  onClick={() => deleteBot(bot._id)}
                   variant="outline"
                   className="w-full justify-start gap-2 text-red-600 hover:text-red-700 dark:text-red-300 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 font-inter border-gray-300 dark:border-stone-700"
                 >
@@ -442,8 +504,25 @@ const ManageBotsPage = () => {
           );
         })}
       </div>
-      <div onClick={loadMoreBots} className={`w-full ${!hasMore ? "hidden" : "flex"}  justify-center items-center bg-pink-50 dark:bg-stone-950`}>
-          <Button size="lg" className=" bg-green-700 hover:bg-green-800 cursor-pointer">{botLoading ? <div className="flex gap-2"><Spinner/>Loading</div> : "Load More"}</Button>
+      <div
+        onClick={loadMoreBots}
+        className={`w-full ${
+          !hasMore ? "hidden" : "flex"
+        }  justify-center items-center bg-pink-50 dark:bg-stone-950`}
+      >
+        <Button
+          size="lg"
+          className=" bg-green-700 hover:bg-green-800 cursor-pointer"
+        >
+          {botLoading ? (
+            <div className="flex gap-2">
+              <Spinner />
+              Loading
+            </div>
+          ) : (
+            "Load More"
+          )}
+        </Button>
       </div>
     </div>
   );
