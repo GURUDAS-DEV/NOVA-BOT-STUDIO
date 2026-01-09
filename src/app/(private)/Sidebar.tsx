@@ -115,10 +115,10 @@ const Sidebar = () => {
             active={isActive("/home/automation")}
           />
           <NavLink
-            href="/home/api-keys"
+            href="/home/API_Keys"
             label="API Keys"
             icon={BiKey}
-            active={isActive("/home/api-keys")}
+            active={isActive("/home/API_Keys")}
           />
           <NavLink
             href="/home/RecentlyDeleted"

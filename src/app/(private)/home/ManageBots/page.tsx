@@ -19,6 +19,7 @@ import { bot } from "@/lib/Types/getBots";
 import { Spinner } from "@/components/ui/spinner";
 import { toast, Toaster } from "sonner";
 import { useRouter } from "next/navigation";
+import DailogApiBox from "./dailog/DailogApiBox";
 
 const ManageBotsPage = () => {
   const router = useRouter();
@@ -290,6 +291,7 @@ const ManageBotsPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
+      <DailogApiBox apiKey="12345678" open={true} onOpenChange={() => {}} />
       <Toaster position="top-right" duration={3000} richColors />
       {/* Header Section */}
       <div className="flex items-start justify-between gap-4">
