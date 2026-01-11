@@ -50,14 +50,14 @@ const DailogApiBox: React.FC<ApiKeyDialogProps> = ({
         <AlertDialogOverlay className="bg-black/70 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0" />
         <AlertDialogPrimitive.Content
           className={cn(
-            "fixed top-1/2 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-gray-200/70 bg-white/95 p-6 shadow-2xl ring-1 ring-black/5 backdrop-blur-0 transition-all duration-200",
+            "fixed top-1/2 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-gray-200/70 bg-white/95 p-7 md:p-8 shadow-2xl ring-1 ring-black/5 backdrop-blur-0 transition-all duration-200 space-y-6",
             "dark:border-stone-800/80 dark:bg-stone-800/95 dark:ring-white/5",
             "data-[state=open]:animate-in data-[state=open]:zoom-in-90 data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:zoom-out-90 data-[state=closed]:fade-out-0"
           )}
         >
-          <div className="flex items-start font-outfit justify-between gap-3">
+          <div className="flex items-start font-outfit justify-between gap-4">
             <div className="flex items-start gap-5">
-              <span className="flex size-11 items-center justify-center rounded-xl border border-pink-100/70 bg-gradient-to-br from-pink-500/15 via-pink-500/8 to-blue-500/15 text-pink-600 shadow-sm dark:border-pink-900/50 dark:text-pink-200">
+              <span className="flex size-11 items-center justify-center rounded-xl border border-pink-100/70 bg-linear-to-br from-pink-500/15 via-pink-500/8 to-blue-500/15 text-pink-600 shadow-sm dark:border-pink-900/50 dark:text-pink-200">
                 <ShieldAlert className="size-5" aria-hidden="true" />
               </span>
               <div className="space-y-1.5">
@@ -74,13 +74,13 @@ const DailogApiBox: React.FC<ApiKeyDialogProps> = ({
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 dark:border-stone-800 bg-gray-50/80 dark:bg-black/40 px-4 py-3 shadow-inner">
-            <div className="font-outfit text-sm text-gray-900 dark:text-gray-100 break-all">
+          <div className="rounded-xl border border-gray-200 dark:border-stone-800 bg-gray-50/80 dark:bg-black/40 px-5 py-4 shadow-inner">
+            <div className="font-outfit text-sm leading-relaxed text-gray-900 dark:text-gray-100 break-all">
               {apiKey || "No key available"}
             </div>
           </div>
 
-          <AlertDialogFooter className="flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <AlertDialogFooter className="flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               <span className="inline-flex size-2.5 rounded-full bg-amber-400/90" aria-hidden="true" />
               Only visible right now. Store it in your password manager.

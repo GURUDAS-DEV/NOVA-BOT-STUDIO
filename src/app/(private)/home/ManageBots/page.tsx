@@ -32,6 +32,9 @@ const ManageBotsPage = () => {
   const [hasNoBots, setHasNoBots] = useState<boolean>(false);
   const [botLoading, setBotLoading] = useState<boolean>(false);
   const [noOfBots, setNoOfBots] = useState<number>(0);
+  const [botStartLoading, setBotStartLoading] = useState<boolean>(false);
+  const [apiDialogOpen, setApiDialogOpen] = useState<boolean>(false);
+  const [selectedApiKey, setSelectedApiKey] = useState<string>("");
 
   const platforms = {
     Telegram: {
@@ -108,7 +111,6 @@ const ManageBotsPage = () => {
         }
       );
       const data = await response.json();
-      console.log("Fetched bots:", data);
       if (response.ok) {
         setBots(data.bots);
         setCursor(data.cursor);
@@ -168,7 +170,7 @@ const ManageBotsPage = () => {
         }
       );
       const data = await response.json();
-      console.log(data);
+      console.log("Delete bot response data:", data);
       if (response.ok) {
         setBots(bots.filter((bot) => bot._id !== botId));
         toast.success(
@@ -183,9 +185,60 @@ const ManageBotsPage = () => {
     }
   };
 
+  const startBot = async (botId: string) => {
+    try{
+      console.log("Starting bot with ID:", botId);
+      setBotStartLoading(true);
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/advanceBotController/startBot`,{
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({botId})
+      });
+      const data = await response.json();
+      console.log("Start bot response data:", data);
+
+      if(response.ok){
+        toast.success("Bot started successfully!");
+        setBots(bots.map(bot => bot._id === botId ? {...bot, status: 'active'} : bot));
+        setApiDialogOpen(true);
+        setSelectedApiKey(data.apiKey);
+      }
+      else{
+        toast.error(data.message || "Failed to start the bot.");
+      }
+    }
+    catch(e){
+      console.error("Error starting bot:", e);
+      toast.error("An unexpected error occurred. Please try again later.");
+    }
+    finally{
+      setBotStartLoading(false);
+    }
+  }
+
   const ActionOfBot = (bot: bot) => {
-    if (bot.status === "draft") {
-      toast.error("Please setup the bot to Pause or Resume the bot.");
+    const currentStatus = bot.status;
+    const botId = bot._id;
+    switch(currentStatus){
+      case "draft":
+        toast.error("Please complete the bot setup to start it.");
+        break;
+      case "inactive":
+        startBot(botId);
+        break;
+      case "paused":
+        toast.error("Resume functionality coming soon!");
+        break;
+      case "active":
+        toast.error("Pause functionality coming soon!");
+        break;
+      default:
+        toast.error("Unknown bot status.");
+        break;
     }
   };
 
@@ -203,10 +256,10 @@ const ManageBotsPage = () => {
     switch (status) {
       case "inactive":
         return (
-          <>
+          <h1 className="flex gap-2 items-center cursor-pointer justify-start" >
             <GiPowerButton className="w-4 h-4" />
-            Start
-          </>
+              Start
+            </h1>
         );
       case "active":
         return (
@@ -223,6 +276,7 @@ const ManageBotsPage = () => {
           </>
         );
         case "draft":
+          console.log("Setup required for bot:", bot._id);
         return (
           <>
           <GiPowerButton className="w-4 h-4" />
@@ -249,6 +303,17 @@ const ManageBotsPage = () => {
         </Button>
       </div>
     );
+  }
+
+  if(botStartLoading){
+    return(
+      <div className="w-screen h-screen flex justify-center items-center">
+        <Button>
+          <Spinner className="mr-2" />
+          Starting the Bot...
+        </Button>
+      </div>
+    )
   }
 
   if (hasNoBots) {
@@ -291,7 +356,7 @@ const ManageBotsPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
-      <DailogApiBox apiKey="12345678" open={true} onOpenChange={() => {}} />
+      <DailogApiBox apiKey={selectedApiKey} open={apiDialogOpen} onOpenChange={setApiDialogOpen} />
       <Toaster position="top-right" duration={3000} richColors />
       {/* Header Section */}
       <div className="flex items-start justify-between gap-4">
@@ -352,24 +417,14 @@ const ManageBotsPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {bots.map((bot) => {
           // Debug: log the platform value
-          console.log(
-            "Bot platform:",
-            bot.platform,
-            "Type:",
-            typeof bot.platform
-          );
+          
 
           const platformKey = bot.platform as keyof typeof platforms;
           const platform = platforms[platformKey];
           const PlatformIcon = platform?.icon || BiBot;
 
           // Debug: log if platform was found
-          console.log(
-            "Platform found:",
-            !!platform,
-            "Platform data:",
-            platform
-          );
+        
 
           return (
             <div
