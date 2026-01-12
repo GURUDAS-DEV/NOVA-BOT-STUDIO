@@ -87,7 +87,7 @@ const WebsiteAPIKeysPage = () => {
         if(!response.ok){
           toast.error("Failed to generate new API key");
           throw new Error("Failed to generate new API key");
-        }
+        } 
 
         const data = await response.json();
         console.log(data);
