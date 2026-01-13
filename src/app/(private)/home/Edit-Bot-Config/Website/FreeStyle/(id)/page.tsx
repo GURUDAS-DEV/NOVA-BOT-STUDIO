@@ -25,6 +25,13 @@ import { toast, Toaster } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface QAPair {
   question: string;
@@ -59,6 +66,35 @@ const EditBotPage = () => {
   const [pendingEnhancedText, setPendingEnhancedText] = useState<string | null>(null);
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [tempFormData, setTempFormData] = useState<FormData | null>(null);
+  const [isValidatingBehavior, setIsValidatingBehavior] = useState(false);
+  const [isValidatingExamples, setIsValidatingExamples] = useState(false);
+  const [includeApi, setIncludeApi] = useState(false);
+  const [isApiTested, setIsApiTested] = useState(false);
+  const WEBSITE_CONTEXT_OPTIONS = [
+    "E-commerce",
+    "Portfolio",
+    "Blog",
+    "SaaS",
+    "Education",
+    "Healthcare",
+    "Real Estate",
+    "Travel",
+    "News/Media",
+    "Customer Support",
+    "Booking/Reservations",
+    "Community/Forum",
+    "Finance/Fintech",
+    "Entertainment",
+    "Personal",
+    "Non-profit",
+    "Restaurant/Food",
+    "Agency/Services",
+    "Marketplace",
+    "Landing Page",
+    "Other",
+  ];
+  const [selectedWebsiteOptions, setSelectedWebsiteOptions] = useState<string[]>([]);
+  const [otherWebsiteOption, setOtherWebsiteOption] = useState<string>("");
 
   const [formData, setFormData] = useState<FormData>({
     botType: "Freestyle Website Bot",
@@ -101,8 +137,7 @@ const EditBotPage = () => {
         tone: data?.botConfig?.config?.tone || "Professional",
         verbosity: data?.botConfig?.config?.verbosity || "Friendly",
         websiteContext: data?.botConfig?.config?.websiteType || "",
-        detailedDescription:
-          data?.botConfig?.config?.behaviorDescription || "",
+        detailedDescription: data?.botConfig?.config?.behaviorDescription || "",
         OwnerInformation: data?.botConfig?.config?.OwnerInformation || "",
         additionalInformation:
           data?.botConfig?.config?.additionalInformation || "",
@@ -127,118 +162,19 @@ const EditBotPage = () => {
     }
   }, [id]);
 
-  const enhanceTextWithAI = async (): Promise<void> => {
-    setPendingEnhancedText(null);
-    if (formData.detailedDescription.trim().length <= 100) {
-      toast.error(
-        "Please enter at least 100 characters in the description to enhance."
-      );
-      return;
-    }
-    try {
-      setIsEnhancing(true);
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/aiFeatures/EnhanceText`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ text: formData.detailedDescription }),
-        }
-      );
-      const data = await response.json();
-      if (response.ok && data?.enhancedText) {
-        setPendingEnhancedText(data.enhancedText);
-        toast.success("Enhanced text ready. Accept or reject below.");
-      } else {
-        toast.error("Failed to enhance description. Please try again.");
+  // helper to enhance any text block
+  const enhanceAnyText = async (text: string): Promise<string | null> => {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/aiFeatures/EnhanceText`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
       }
-    } catch (error) {
-      toast.error("Something went wrong while enhancing. Please try again.");
-      console.error("Error enhancing text:", error);
-    } finally {
-      setIsEnhancing(false);
-    }
-  };
-
-  const acceptEnhancedText = (): void => {
-    if (!pendingEnhancedText) return;
-    setFormData({ ...formData, detailedDescription: pendingEnhancedText });
-    setPendingEnhancedText(null);
-    toast.success("Enhanced text applied.");
-  };
-
-  const rejectEnhancedText = (): void => {
-    setPendingEnhancedText(null);
-    toast.info("Keeping your original text.");
-  };
-
-  const testApi = async (): Promise<void> => {
-    if (
-      formData.apiEndpoint.includes("localhost") ||
-      formData.apiEndpoint.startsWith("file://")
-    ) {
-      toast.error(
-        "API Test Failed! Localhost or file:// endpoints are not accessible from our servers."
-      );
-      return;
-    }
-
-    try {
-      setIsTestingApi(true);
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/botConfig/testUserGivenApi`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ apiEndpoint: formData.apiEndpoint }),
-        }
-      );
-      const data = await response.json();
-      if (!response.ok) {
-        toast.error(
-          "API Test Failed! Check your Endpoint or give permission to access this API on server."
-        );
-        return;
-      }
-      setFormData({
-        ...formData,
-        responseFormat: data ? JSON.stringify(data, null, 2) : "",
-      });
-      toast.success("API Test Succeeded! Now bot can use this API.");
-    } catch (error) {
-      toast.error("API test failed. Please check your endpoint.");
-    } finally {
-      setIsTestingApi(false);
-    }
-  };
-
-  const addExample = () => {
-    setFormData({
-      ...formData,
-      examples: [...formData.examples, { question: "", answer: "" }],
-    });
-  };
-
-  const removeExample = (index: number) => {
-    setFormData({
-      ...formData,
-      examples: formData.examples.filter((_, idx) => idx !== index),
-    });
-  };
-
-  const updateExample = (
-    index: number,
-    field: "question" | "answer",
-    value: string
-  ) => {
-    const updated = formData.examples.map((ex, idx) =>
-      idx === index ? { ...ex, [field]: value } : ex
     );
-    setFormData({ ...formData, examples: updated });
+    const data = await response.json();
+    if (response.ok && data?.enhancedText) return data.enhancedText as string;
+    return null;
   };
 
   const handleSaveChanges = async () => {
@@ -247,24 +183,53 @@ const EditBotPage = () => {
       return;
     }
 
+    if (!formData.websiteContext.trim()) {
+      toast.error("Website context must be set.");
+      return;
+    }
+
     try {
       setSaving(true);
+
+      // Build the config object with proper mapping to backend schema
+      const configPayload: any = {
+        botType: formData.botType,
+        websiteType: formData.websiteContext,
+        tone: formData.tone,
+        verbosity: formData.verbosity,
+        behaviorDescription: formData.detailedDescription,
+        OwnerInformation: formData.OwnerInformation,
+        additionalInformation: formData.additionalInformation,
+        examples: formData.examples,
+      };
+
+      // Only include API fields if API endpoint is configured
+      if (formData.apiEndpoint.trim()) {
+        configPayload.apiEndpoint = formData.apiEndpoint;
+        configPayload.apiUsageRules = formData.apiUsageRules;
+        configPayload.responseFormat = formData.responseFormat;
+      }
+
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/botConfig/updateConfig/${id}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/botConfig/updateConfig`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify(formData),
+          body: JSON.stringify({
+            botId: id,
+            config: configPayload,
+          }),
         }
       );
 
       if (response.ok) {
         toast.success("Bot configuration updated successfully!");
       } else {
-        toast.error("Failed to update bot configuration.");
+        const errorData = await response.json().catch(() => ({}));
+        toast.error(errorData?.message || "Failed to update bot configuration.");
       }
     } catch (error) {
       toast.error("An error occurred while saving.");
@@ -279,6 +244,39 @@ const EditBotPage = () => {
     setEditingSection(sectionId);
     setTempFormData({ ...formData });
     setPendingEnhancedText(null);
+    if (sectionId === "apiIntegration") {
+      setIncludeApi(!!formData.apiEndpoint);
+      setIsApiTested(!!formData.responseFormat);
+    }
+    if (sectionId === "websiteContext") {
+      // Parse current string into selections and other text
+      const raw = (formData.websiteContext || "").trim();
+      if (!raw) {
+        setSelectedWebsiteOptions([]);
+        setOtherWebsiteOption("");
+      } else {
+        const parts = raw
+          .split(",")
+          .map((p) => p.trim())
+          .filter(Boolean);
+        let otherVal = "";
+        const normalized: string[] = [];
+        for (const p of parts) {
+          if (/^Other\s*:/i.test(p)) {
+            otherVal = p.replace(/^Other\s*:/i, "").trim();
+            normalized.push("Other");
+          } else if (WEBSITE_CONTEXT_OPTIONS.includes(p)) {
+            normalized.push(p);
+          } else {
+            // Unknown option from older saves — treat as Other
+            otherVal = p;
+            if (!normalized.includes("Other")) normalized.push("Other");
+          }
+        }
+        setSelectedWebsiteOptions(Array.from(new Set(normalized)).slice(0, 5));
+        setOtherWebsiteOption(otherVal);
+      }
+    }
   };
 
   const closeEditSection = () => {
@@ -287,15 +285,136 @@ const EditBotPage = () => {
     setPendingEnhancedText(null);
   };
 
-  const saveSection = () => {
-    if (tempFormData) {
-      setFormData(tempFormData);
-      toast.success("Section updated successfully!");
+  const saveSection = async () => {
+    if (!tempFormData) {
+      closeEditSection();
+      return;
     }
+
+    if (editingSection === "websiteContext") {
+      if (selectedWebsiteOptions.length !== 5) {
+        toast.error("Please select exactly 5 options for Website Context.");
+        return;
+      }
+      if (selectedWebsiteOptions.includes("Other") && !otherWebsiteOption.trim()) {
+        toast.error("Please specify the 'Other' value.");
+        return;
+      }
+      const serialized = selectedWebsiteOptions
+        .map((opt) => (opt === "Other" ? `Other: ${otherWebsiteOption.trim()}` : opt))
+        .join(", ");
+      const updated = { ...tempFormData, websiteContext: serialized };
+      setFormData(updated);
+      toast.success("Website Context updated.");
+      closeEditSection();
+      return;
+    }
+
+    if (editingSection === "detailedDescription") {
+      const text = tempFormData.detailedDescription?.trim() || "";
+      if (text.length < 100) {
+        toast.error("Detailed description must be at least 100 characters.");
+        return;
+      }
+      try {
+        setIsValidatingBehavior(true);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/aiFeatures/ValidateText`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text, botType: tempFormData.botType } ),
+          }
+        );
+        const raw: any = await response.json().catch(() => ({}));
+        let parsed: any = {};
+        if (raw && typeof raw.validationResult !== "undefined") {
+          if (typeof raw.validationResult === "string") {
+            try {
+              parsed = JSON.parse(raw.validationResult);
+            } catch {
+              parsed = {};
+            }
+          } else {
+            parsed = raw.validationResult;
+          }
+        } else {
+          parsed = raw;
+        }
+        const isValid = !!(parsed && parsed.result === true);
+        if (!isValid) {
+          const reason = parsed?.reason || raw?.reason || "Description didn\'t pass validation.";
+          toast.error(reason);
+          return;
+        }
+        setFormData(tempFormData);
+        toast.success("Description validated and saved.");
+        closeEditSection();
+        return;
+      } catch(e) {
+        console.log("Validation service error", e);
+        toast.error("Validation service failed. Please try again.");
+        return;
+      } finally {
+        setIsValidatingBehavior(false);
+      }
+    }
+
+    if (editingSection === "examples") {
+      try{
+        setIsValidatingExamples(true);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/aiFeatures/ValidateExample`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ examples: tempFormData.examples, botType: tempFormData.botType }),
+        });
+        const data  =await response.json();
+        const parsed = typeof data.message === "string" ? JSON.parse(data.message) : data.message;
+        console.log("Example validation response", parsed);
+      }
+      catch(e){
+        toast.error("Server is busy right now. Please try again later.");
+        console.log("Example validation service error", e);
+      }
+      finally{
+        setIsValidatingExamples(false);
+      }
+    }
+
+    if (editingSection === "apiIntegration") {
+      if (!includeApi) {
+        const updated = { ...tempFormData, apiEndpoint: "", apiUsageRules: "", responseFormat: "" };
+        setFormData(updated);
+        setIsApiTested(false);
+        toast.success("API Integration removed.");
+        closeEditSection();
+        return;
+      }
+      
+      // Validate API endpoint if it's being included
+      if (includeApi && tempFormData.apiEndpoint.trim()) {
+        if (!isApiTested) {
+          toast.error("Please test the API endpoint before saving.");
+          return;
+        }
+        if (!tempFormData.responseFormat.trim()) {
+          toast.error("API endpoint must be tested successfully with a valid response format.");
+          return;
+        }
+      }
+      
+      setFormData(tempFormData);
+      toast.success("API Integration updated.");
+      closeEditSection();
+      return;
+    }
+
+    setFormData(tempFormData);
+    toast.success("Section updated successfully!");
     closeEditSection();
   };
 
-  const updateTempField = (field: keyof FormData, value: any) => {
+  const updateTempField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     if (tempFormData) {
       setTempFormData({ ...tempFormData, [field]: value });
     }
@@ -385,8 +504,8 @@ const EditBotPage = () => {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 font-outfit">
             Bot Not Found
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-8 font-inter text-lg">
-            The bot you're trying to edit doesn't exist or may have been
+          <p className="text-gray-600 dark:text-gray-400 mb-8 font-outfit text-lg">
+            The bot you&apos;re trying to edit doesn&apos;t exist or may have been
             deleted. Please check the bot ID and try again.
           </p>
 
@@ -409,7 +528,7 @@ const EditBotPage = () => {
           </div>
 
           <div className="mt-12 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
-            <p className="text-sm text-blue-800 dark:text-blue-300 font-inter">
+            <p className="text-sm text-blue-800 dark:text-blue-300 font-outfit">
               <strong>Need help?</strong> If you believe this is an error,
               please contact support or check your recent activity.
             </p>
@@ -436,7 +555,7 @@ const EditBotPage = () => {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white font-outfit">
             Edit Bot Configuration
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2 font-inter">
+          <p className="text-gray-600 dark:text-gray-400 mt-2 font-outfit">
             {botName} • Freestyle Website Bot
           </p>
         </div>
@@ -455,7 +574,7 @@ const EditBotPage = () => {
                       <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-outfit">
                         {sections.find((s) => s.id === editingSection)?.title}
                       </h2>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 font-inter">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-outfit">
                         {sections.find((s) => s.id === editingSection)?.description}
                       </p>
                     </div>
@@ -476,42 +595,106 @@ const EditBotPage = () => {
                 {editingSection === "toneVerbosity" && (
                   <>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-900 dark:text-white font-inter">
+                      <label className="text-sm font-medium text-gray-900 dark:text-white font-outfit">
                         Tone
                       </label>
-                      <Textarea
-                        placeholder="e.g., Professional, Casual, Friendly"
-                        value={tempFormData.tone}
-                        onChange={(e) => updateTempField("tone", e.target.value)}
-                        className="dark:bg-black bg-white dark:text-white text-black font-inter"
-                      />
+                      <Select value={tempFormData.tone} onValueChange={(value) => updateTempField("tone", value)}>
+                        <SelectTrigger className="dark:bg-black bg-white dark:text-white text-black font-outfit">
+                          <SelectValue placeholder="Select a tone" />
+                        </SelectTrigger>
+                        <SelectContent className="dark:bg-black bg-white">
+                          <SelectItem value="Professional" className="dark:text-white text-black dark:hover:bg-gray-900 hover:bg-pink-50 dark:hover:text-white hover:text-black focus:dark:bg-gray-900 focus:bg-pink-50">Professional</SelectItem>
+                          <SelectItem value="Friendly" className="dark:text-white text-black dark:hover:bg-gray-900 hover:bg-pink-50 dark:hover:text-white hover:text-black focus:dark:bg-gray-900 focus:bg-pink-50">Friendly</SelectItem>
+                          <SelectItem value="Casual" className="dark:text-white text-black dark:hover:bg-gray-900 hover:bg-pink-50 dark:hover:text-white hover:text-black focus:dark:bg-gray-900 focus:bg-pink-50">Casual</SelectItem>
+                          <SelectItem value="Formal" className="dark:text-white text-black dark:hover:bg-gray-900 hover:bg-pink-50 dark:hover:text-white hover:text-black focus:dark:bg-gray-900 focus:bg-pink-50">Formal</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-900 dark:text-white font-inter">
+                      <label className="text-sm font-medium text-gray-900 dark:text-white font-outfit">
                         Verbosity
                       </label>
-                      <Textarea
-                        placeholder="e.g., Brief, Detailed, Conversational"
-                        value={tempFormData.verbosity}
-                        onChange={(e) => updateTempField("verbosity", e.target.value)}
-                        className="dark:bg-black bg-white dark:text-white text-black font-inter"
-                      />
+                      <Select value={tempFormData.verbosity} onValueChange={(value) => updateTempField("verbosity", value)}>
+                        <SelectTrigger className="dark:bg-black bg-white dark:text-white text-black font-outfit">
+                          <SelectValue placeholder="Select verbosity level" />
+                        </SelectTrigger>
+                        <SelectContent className="dark:bg-black bg-white">
+                          <SelectItem value="Concise" className="dark:text-white text-black dark:hover:bg-gray-900 hover:bg-pink-50 dark:hover:text-white hover:text-black focus:dark:bg-gray-900 focus:bg-pink-50">Concise - Short and to the point</SelectItem>
+                          <SelectItem value="Balanced" className="dark:text-white text-black dark:hover:bg-gray-900 hover:bg-pink-50 dark:hover:text-white hover:text-black focus:dark:bg-gray-900 focus:bg-pink-50">Balanced - Moderate detail</SelectItem>
+                          <SelectItem value="Detailed" className="dark:text-white text-black dark:hover:bg-gray-900 hover:bg-pink-50 dark:hover:text-white hover:text-black focus:dark:bg-gray-900 focus:bg-pink-50">Detailed - Comprehensive responses</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </>
                 )}
 
                 {/* Website Context Section */}
                 {editingSection === "websiteContext" && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-900 dark:text-white font-inter">
-                      Website Context
-                    </label>
-                    <Textarea
-                      placeholder="Describe your website and business..."
-                      value={tempFormData.websiteContext}
-                      onChange={(e) => updateTempField("websiteContext", e.target.value)}
-                      className="min-h-[150px] dark:bg-black bg-white dark:text-white text-black font-inter"
-                    />
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-gray-900 dark:text-white font-outfit">
+                        Website Context (select exactly 5)
+                      </label>
+                      <span className={`text-xs font-semibold ${
+                        selectedWebsiteOptions.length === 5
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-gray-500 dark:text-gray-400"
+                      }`}>
+                        {selectedWebsiteOptions.length}/5 selected
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {WEBSITE_CONTEXT_OPTIONS.map((opt) => {
+                        const active = selectedWebsiteOptions.includes(opt);
+                        const maxed = !active && selectedWebsiteOptions.length >= 5;
+                        return (
+                          <Button
+                            key={opt}
+                            type="button"
+                            variant={active ? "default" : "outline"}
+                            onClick={() => {
+                              setSelectedWebsiteOptions((prev) => {
+                                if (prev.includes(opt)) {
+                                  return prev.filter((o) => o !== opt);
+                                }
+                                if (prev.length >= 5) {
+                                  toast.error("You can only select 5 options.");
+                                  return prev;
+                                }
+                                return [...prev, opt];
+                              });
+                            }}
+                            disabled={maxed}
+                            className={`${
+                              active
+                                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                                : "dark:bg-black bg-white dark:text-white text-black"
+                            } border-gray-300 dark:border-stone-700 justify-start`}
+                          >
+                            {opt}
+                          </Button>
+                        );
+                      })}
+                    </div>
+
+                    {selectedWebsiteOptions.includes("Other") && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-900 dark:text-white font-outfit">
+                          Specify Other
+                        </label>
+                        <Input
+                          placeholder="Describe your specific context..."
+                          value={otherWebsiteOption}
+                          onChange={(e) => setOtherWebsiteOption(e.target.value)}
+                          className="dark:bg-black bg-white dark:text-white text-black font-outfit"
+                        />
+                      </div>
+                    )}
+
+                    <p className="text-xs text-gray-600 dark:text-gray-400 font-outfit">
+                      Tip: Choose the 5 categories that best describe your website. Use &quot;Other&quot; if none fit.
+                    </p>
                   </div>
                 )}
 
@@ -519,7 +702,7 @@ const EditBotPage = () => {
                 {editingSection === "detailedDescription" && (
                   <div className="relative space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium text-gray-900 dark:text-white font-inter">
+                      <label className="text-sm font-medium text-gray-900 dark:text-white font-outfit">
                         Detailed Description
                       </label>
                       <span
@@ -539,7 +722,7 @@ const EditBotPage = () => {
                         onChange={(e) =>
                           updateTempField("detailedDescription", e.target.value)
                         }
-                        className="min-h-[150px] pr-12 dark:bg-black bg-white dark:text-white text-black font-inter"
+                        className="min-h-[150px] pr-12 dark:bg-black bg-white dark:text-white text-black font-outfit rounded-lg border border-gray-300 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50"
                       />
                       {isEnhancing && (
                         <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-black/50 rounded">
@@ -557,22 +740,14 @@ const EditBotPage = () => {
                           }
                           try {
                             setIsEnhancing(true);
-                            const response = await fetch(
-                              `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/aiFeatures/EnhanceText`,
-                              {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ text: tempFormData.detailedDescription }),
-                              }
-                            );
-                            const data = await response.json();
-                            if (response.ok && data?.enhancedText) {
-                              setPendingEnhancedText(data.enhancedText);
+                            const enhanced = await enhanceAnyText(tempFormData.detailedDescription);
+                            if (enhanced) {
+                              setPendingEnhancedText(enhanced);
                               toast.success("Enhanced text ready!");
                             } else {
                               toast.error("Failed to enhance.");
                             }
-                          } catch (error) {
+                          } catch {
                             toast.error("Enhancement failed.");
                           } finally {
                             setIsEnhancing(false);
@@ -586,10 +761,10 @@ const EditBotPage = () => {
                     </div>
                     {pendingEnhancedText && (
                       <div className="rounded-md border border-gray-200 dark:border-stone-700 bg-gray-50 dark:bg-stone-900/70 p-3 space-y-2">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white font-inter">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white font-outfit">
                           Enhanced Text:
                         </p>
-                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-inter">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-outfit">
                           {pendingEnhancedText}
                         </p>
                         <div className="flex gap-2">
@@ -624,7 +799,7 @@ const EditBotPage = () => {
                 {editingSection === "information" && (
                   <>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-900 dark:text-white font-inter">
+                      <label className="text-sm font-medium text-gray-900 dark:text-white font-outfit">
                         Information to Provide by Bot
                       </label>
                       <Textarea
@@ -633,11 +808,11 @@ const EditBotPage = () => {
                         onChange={(e) =>
                           updateTempField("OwnerInformation", e.target.value)
                         }
-                        className="min-h-[100px] dark:bg-black bg-white dark:text-white text-black font-inter"
+                        className="min-h-[120px] dark:bg-black bg-white dark:text-white text-black font-outfit rounded-lg border border-gray-300 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-900 dark:text-white font-inter">
+                      <label className="text-sm font-medium text-gray-900 dark:text-white font-outfit">
                         Additional Information
                       </label>
                       <Textarea
@@ -646,7 +821,7 @@ const EditBotPage = () => {
                         onChange={(e) =>
                           updateTempField("additionalInformation", e.target.value)
                         }
-                        className="min-h-[100px] dark:bg-black bg-white dark:text-white text-black font-inter"
+                        className="min-h-[120px] dark:bg-black bg-white dark:text-white text-black font-outfit rounded-lg border border-gray-300 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50"
                       />
                     </div>
                   </>
@@ -661,7 +836,7 @@ const EditBotPage = () => {
                         className="p-4 bg-gray-50 dark:bg-stone-800 rounded-lg space-y-3 border border-gray-200 dark:border-stone-700"
                       >
                         <div className="flex justify-between items-center">
-                          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 font-inter">
+                          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 font-outfit">
                             Example {index + 1}
                           </span>
                           {tempFormData.examples.length > 1 && (
@@ -687,7 +862,7 @@ const EditBotPage = () => {
                             );
                             updateTempField("examples", updated);
                           }}
-                          className="dark:bg-black bg-white dark:text-white text-black font-inter"
+                          className="dark:bg-black bg-white dark:text-white text-black font-outfit"
                         />
                         <Textarea
                           placeholder="Answer..."
@@ -698,7 +873,7 @@ const EditBotPage = () => {
                             );
                             updateTempField("examples", updated);
                           }}
-                          className="min-h-20 dark:bg-black bg-white dark:text-white text-black font-inter"
+                          className="min-h-20 dark:bg-black bg-white dark:text-white text-black font-outfit"
                         />
                       </div>
                     ))}
@@ -710,7 +885,7 @@ const EditBotPage = () => {
                         ]);
                       }}
                       variant="outline"
-                      className="w-full dark:bg-black bg-white dark:text-white text-black font-inter"
+                      className="w-full dark:bg-black bg-white dark:text-white text-black font-outfit"
                     >
                       <MdAdd className="h-4 w-4 mr-2" />
                       Add Example
@@ -721,84 +896,125 @@ const EditBotPage = () => {
                 {/* API Integration Section */}
                 {editingSection === "apiIntegration" && (
                   <>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-900 dark:text-white font-inter">
-                        API Endpoint
-                      </label>
-                      <Input
-                        placeholder="https://api.example.com/endpoint"
-                        value={tempFormData.apiEndpoint}
-                        onChange={(e) => updateTempField("apiEndpoint", e.target.value)}
-                        className="dark:bg-black bg-white dark:text-white text-black font-inter"
-                      />
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
+                        <input
+                          type="checkbox"
+                          checked={includeApi}
+                          onChange={(e) => setIncludeApi(e.target.checked)}
+                          className="w-5 h-5 cursor-pointer accent-blue-600 dark:accent-blue-400"
+                        />
+                        <label className="text-sm font-medium text-gray-900 dark:text-white font-outfit cursor-pointer flex-1">
+                          Include API Integration
+                        </label>
+                      </div>
+
+                      {includeApi && (
+                        <div className="space-y-4 pt-2">
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-900 dark:text-white font-outfit">
+                              API Endpoint
+                            </label>
+                            <Input
+                              placeholder="https://api.example.com/endpoint"
+                              value={tempFormData.apiEndpoint}
+                              onChange={(e) => {
+                                updateTempField("apiEndpoint", e.target.value);
+                                setIsApiTested(false);
+                              }}
+                              className="dark:bg-black bg-white dark:text-white text-black font-outfit"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-900 dark:text-white font-outfit">
+                              API Usage Rules
+                            </label>
+                            <Textarea
+                              placeholder="Specify how to use this API..."
+                              value={tempFormData.apiUsageRules}
+                              onChange={(e) => updateTempField("apiUsageRules", e.target.value)}
+                              className="min-h-[120px] dark:bg-black bg-white dark:text-white text-black font-outfit rounded-lg border border-gray-300 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-900 dark:text-white font-outfit">
+                              Response Format
+                            </label>
+                            <Textarea
+                              disabled
+                              value={tempFormData.responseFormat}
+                              className="min-h-[100px] text-xs dark:bg-black bg-gray-100 dark:text-white text-gray-600 cursor-not-allowed font-outfit"
+                            />
+                          </div>
+                          {tempFormData.apiEndpoint && (
+                            <Button
+                              onClick={async () => {
+                                if (
+                                  tempFormData.apiEndpoint.includes("localhost") ||
+                                  tempFormData.apiEndpoint.startsWith("file://")
+                                ) {
+                                  toast.error("Localhost or file:// endpoints are not accessible.");
+                                  return;
+                                }
+                                try {
+                                  setIsTestingApi(true);
+                                  const response = await fetch(
+                                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/botConfig/testUserGivenApi`,
+                                    {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ apiEndpoint: tempFormData.apiEndpoint }),
+                                    }
+                                  );
+                                  const data = await response.json();
+                                  if (!response.ok) {
+                                    toast.error("API Test Failed!");
+                                    setIsApiTested(false);
+                                    return;
+                                  }
+                                  updateTempField("responseFormat", JSON.stringify(data, null, 2));
+                                  setIsApiTested(true);
+                                  toast.success("API Test Succeeded!");
+                                } catch {
+                                  toast.error("API test failed.");
+                                  setIsApiTested(false);
+                                } finally {
+                                  setIsTestingApi(false);
+                                }
+                              }}
+                              disabled={isTestingApi}
+                              className={`w-full font-outfit ${
+                                isApiTested
+                                  ? "bg-green-600 hover:bg-green-700"
+                                  : "bg-purple-600 hover:bg-purple-700"
+                              } text-white`}
+                            >
+                              {isTestingApi ? (
+                                <>
+                                  <Spinner className="mr-2 h-4 w-4" />
+                                  Testing API...
+                                </>
+                              ) : isApiTested ? (
+                                <>
+                                  <MdCheck className="mr-2 h-4 w-4" />
+                                  API Tested Successfully
+                                </>
+                              ) : (
+                                "Test API Connection"
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      )}
+
+                      {!includeApi && (
+                        <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-900">
+                          <p className="text-sm text-amber-800 dark:text-amber-300 font-outfit">
+                            API Integration is disabled. All API-related fields will be cleared when you save.
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-900 dark:text-white font-inter">
-                        API Usage Rules
-                      </label>
-                      <Textarea
-                        placeholder="Specify how to use this API..."
-                        value={tempFormData.apiUsageRules}
-                        onChange={(e) => updateTempField("apiUsageRules", e.target.value)}
-                        className="min-h-[100px] dark:bg-black bg-white dark:text-white text-black font-inter"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-900 dark:text-white font-inter">
-                        Response Format
-                      </label>
-                      <Textarea
-                        disabled
-                        value={tempFormData.responseFormat}
-                        className="min-h-[100px] text-xs dark:bg-black bg-gray-100 dark:text-white text-gray-600 cursor-not-allowed font-inter"
-                      />
-                    </div>
-                    {tempFormData.apiEndpoint && (
-                      <Button
-                        onClick={async () => {
-                          if (
-                            tempFormData.apiEndpoint.includes("localhost") ||
-                            tempFormData.apiEndpoint.startsWith("file://")
-                          ) {
-                            toast.error("Localhost or file:// endpoints are not accessible.");
-                            return;
-                          }
-                          try {
-                            setIsTestingApi(true);
-                            const response = await fetch(
-                              `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/botConfig/testUserGivenApi`,
-                              {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ apiEndpoint: tempFormData.apiEndpoint }),
-                              }
-                            );
-                            const data = await response.json();
-                            if (!response.ok) {
-                              toast.error("API Test Failed!");
-                              return;
-                            }
-                            updateTempField("responseFormat", JSON.stringify(data, null, 2));
-                            toast.success("API Test Succeeded!");
-                          } catch {
-                            toast.error("API test failed.");
-                          } finally {
-                            setIsTestingApi(false);
-                          }
-                        }}
-                        disabled={isTestingApi}
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-inter"
-                      >
-                        {isTestingApi ? (
-                          <>
-                            <Spinner className="mr-2 h-4 w-4" />
-                            Testing API...
-                          </>
-                        ) : (
-                          "Test API Connection"
-                        )}
-                      </Button>
-                    )}
                   </>
                 )}
               </div>
@@ -812,9 +1028,17 @@ const EditBotPage = () => {
                   <MdClose className="size-4 mr-2" />
                   Cancel
                 </Button>
-                <Button onClick={saveSection} className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Button onClick={saveSection} disabled={isValidatingBehavior || isValidatingExamples} className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-80">
                   <MdCheck className="size-4 mr-2" />
-                  Save Changes
+                  {editingSection === "detailedDescription"
+                    ? isValidatingBehavior
+                      ? "Validating..."
+                      : "Validate & Save"
+                    : editingSection === "examples"
+                      ? isValidatingExamples
+                        ? "Validating..."
+                        : "Validate & Save"
+                      : "Save Changes"}
                 </Button>
               </div>
             </div>
@@ -858,15 +1082,15 @@ const EditBotPage = () => {
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 font-outfit">
                 {section.title}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 font-inter">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 font-outfit">
                 {section.description}
               </p>
 
               <div className="bg-gray-50 dark:bg-stone-800 rounded-lg p-3 border border-gray-200 dark:border-stone-700">
-                <p className="text-xs text-gray-600 dark:text-gray-400 font-inter font-semibold mb-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-outfit font-semibold mb-1">
                   Current Value
                 </p>
-                <p className="text-sm text-gray-900 dark:text-white font-inter line-clamp-2">
+                <p className="text-sm text-gray-900 dark:text-white font-outfit line-clamp-2">
                   {section.preview}
                 </p>
               </div>
@@ -874,7 +1098,7 @@ const EditBotPage = () => {
               {!section.locked && (
                 <Button
                   variant="ghost"
-                  className="w-full mt-4 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 flex items-center justify-center gap-2 font-inter"
+                  className="w-full mt-4 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 flex items-center justify-center gap-2 font-outfit"
                 >
                   <MdEdit className="size-4" />
                   Edit Section
@@ -889,14 +1113,14 @@ const EditBotPage = () => {
           <Button
             variant="outline"
             onClick={() => router.back()}
-            className="border-gray-300 dark:border-stone-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-stone-800 font-inter"
+            className="border-gray-300 dark:border-stone-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-stone-800 font-outfit"
           >
             Discard Changes
           </Button>
           <Button
             onClick={handleSaveChanges}
             disabled={saving}
-            className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 font-inter"
+            className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 font-outfit"
           >
             {saving ? (
               <>

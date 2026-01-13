@@ -248,6 +248,9 @@ const ManageBotsPage = () => {
         `/home/CreateBots/${bot.platform}/${bot.style}?id=${bot._id}`
       );
     }
+    else {
+      router.push(`/home/Edit-Bot-Config/Website/FreeStyle?id=${bot._id}`);
+    }
   };
 
   const botStatusShow = (bot: bot) => {
@@ -509,15 +512,15 @@ const ManageBotsPage = () => {
                   className="w-full justify-start gap-2 text-black dark:text-white font-inter border-gray-300 dark:border-stone-700"
                 >
                   {bot.status !== "draft" ? (
-                    <>
+                    <div className="flex items-center justify-start gap-2">
                       <MdSettings className="w-4 h-4" />
                       Configure
-                    </>
+                    </div>
                   ) : (
-                    <>
+                    <div className="flex justify-start items-center gap-2">
                       <MdSettings className="w-4 h-4" />
                       Setup Bot
-                    </>
+                    </div>
                   )}
                 </Button>
                 <Button
