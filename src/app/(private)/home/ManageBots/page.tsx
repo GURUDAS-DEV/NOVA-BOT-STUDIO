@@ -248,7 +248,7 @@ const ManageBotsPage = () => {
         `/home/CreateBots/${bot.platform}/${bot.style}?id=${bot._id}`
       );
     }
-    else {
+    else  {
       router.push(`/home/Edit-Bot-Config/Website/FreeStyle?id=${bot._id}`);
     }
   };
@@ -529,7 +529,9 @@ const ManageBotsPage = () => {
                       toast.error(
                         "Complete the bot configration to unlock analytics."
                       );
-                    else toast.success("Analytics coming soon!");
+                    else{
+                      router.push(`/home/Bot-Analytics?id=${bot._id}`);
+                    };
                   }}
                   className={`w-full justify-start gap-2 font-inter  ${
                     bot.status === "active"

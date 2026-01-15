@@ -326,8 +326,8 @@ const EditBotPage = () => {
             body: JSON.stringify({ text, botType: tempFormData.botType } ),
           }
         );
-        const raw: any = await response.json().catch(() => ({}));
-        let parsed: any = {};
+        const raw = await response.json().catch(() => ({}));
+        let parsed = {};
         if (raw && typeof raw.validationResult !== "undefined") {
           if (typeof raw.validationResult === "string") {
             try {
@@ -341,9 +341,9 @@ const EditBotPage = () => {
         } else {
           parsed = raw;
         }
-        const isValid = !!(parsed && parsed.result === true);
+        const isValid = !!(parsed && parsed?.result === true);
         if (!isValid) {
-          const reason = parsed?.reason || raw?.reason || "Description didn\'t pass validation.";
+          const reason = parsed?.reason || raw?.reason || "Description didn't pass validation.";
           toast.error(reason);
           return;
         }
