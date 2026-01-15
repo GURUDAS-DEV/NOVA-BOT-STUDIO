@@ -237,7 +237,6 @@ export default function EditFreeStylePage() {
       body: JSON.stringify({ freeStyle: config }),
     });
     setSaving(false);
-    // Optionally navigate back to bot overview
     router.push("/home/manage");
   };
 
@@ -360,19 +359,4 @@ docker run -p 3000:3000 -e NEXT_PUBLIC_API_BASE_URL=https://api.example.com nova
 
 * Enable **image optimization** (`next/image`) – already used for the logo.  
 * Use **incremental static regeneration** for public pages if you add them later.  
-* Keep the **Zustand store** minimal; large objects can cause unnecessary re‑renders.
-
----
-
-## API Documentation  
-
-The front‑end communicates with a separate backend API. Below are the most common endpoints used by the UI.
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| `GET` | `/api/auth/me` | Returns current user profile (`username`, `email`, `id`). | ✅ Session cookie |
-| `POST` | `/api/auth/logout` | Destroys the session and clears cookies. | ✅ Session cookie |
-| `GET` | `/api/bots` | List all bots owned by the authenticated user. | ✅ Session cookie |
-| `POST` | `/api/bots` | Create a new bot (payload: `name`, `platform`, `template`). | ✅ Session cookie |
-| `GET` | `/api/bots/:id` | Retrieve bot details, stats, and configuration (includes `freeStyle` object for website bots). | ✅ Session cookie |
-| `PATCH` | `/api/bots/:id` | Update bot settings (e.g., webhook URL, AI model, **freeStyle**
+* Keep the **
