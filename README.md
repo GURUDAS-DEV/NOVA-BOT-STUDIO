@@ -38,10 +38,9 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 | **Notifications** | Toast notifications via `sonner` | ✅ Stable |
 | **Animations** | UI transitions with `radix-ui` and `tw-animate-css` | ✅ Stable |
 | **3D Preview** | Interactive 3‑D bot avatar using `three` | 🟡 Experimental |
-| **Export / Import** | JSON export of bot configuration | ✅ Stable |
+| **Export / Import** | JSON export/import of bot configurations | ✅ Stable |
 | **API** | REST endpoints for auth, bot CRUD, analytics (backend) | ✅ Stable |
 | **Bot Config Editor** | Full‑screen “Edit Bot Config – Website FreeStyle” UI for per‑bot HTML/CSS/JS customization | ✅ Stable |
-| **Export / Import** | JSON export/import of bot configurations | ✅ Stable |
 
 ---
 
@@ -49,7 +48,7 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 
 | Layer | Technology | Reason |
 |-------|------------|--------|
-| **Framework** | **Next.js 16** (React 19) | File‑system routing, API routes, SSR/CSR hybrid |
+| **Framework** | **Next.js 16** (React 19) | File‑system routing, API routes, hybrid SSR/CSR |
 | **Language** | **TypeScript** | End‑to‑end type safety |
 | **Styling** | **TailwindCSS 4**, `tw-animate-css` | Utility‑first, rapid UI prototyping |
 | **State Management** | **Zustand** | Minimalist global store (`useAuthStore`, `useBotStore`) |
@@ -112,7 +111,7 @@ src/
 | **Git** | any recent version |
 | **Vercel CLI** (optional) | 32.x for local preview |
 
-You also need a running **backend API** that implements authentication, bot CRUD and analytics. The backend URL must be supplied via `NEXT_PUBLIC_API_BASE_URL`.
+A running **backend API** that implements authentication, bot CRUD and analytics is required. Supply its URL via `NEXT_PUBLIC_API_BASE_URL`.
 
 ### Installation  
 
@@ -124,13 +123,13 @@ cd NOVA-BOT-STUDIO
 # 2️⃣ Install dependencies
 npm ci   # or `pnpm install` / `yarn install`
 
-# 3️⃣ Copy the example env file
+# 3️⃣ Copy the example environment file
 cp .env.example .env.local
 ```
 
 ### Configuration  
 
-Create a `.env.local` file at the project root (or edit the copied one):
+Create (or edit) `.env.local` at the project root:
 
 ```dotenv
 # Public – injected into the client bundle
@@ -140,7 +139,7 @@ NEXT_PUBLIC_API_BASE_URL=https://api.yourdomain.com
 RESEND_API_KEY=your_resend_api_key
 ```
 
-> **Important:** Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. All other variables remain server‑only.
+> **Note:** Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. All other variables remain server‑only.
 
 ### Verify the installation  
 
@@ -164,7 +163,7 @@ Open <http://localhost:3000>. You should see the public landing page. After logg
 | `npm run lint` | Lints the codebase using ESLint (Next.js config). |
 | `npm run test` | Placeholder – add Jest/Playwright tests here. |
 
-### Example: Creating a bot (client side)  
+### Example: Creating a bot (client side)
 
 ```tsx
 import { useState } from "react";
@@ -207,7 +206,7 @@ export const CreateBot = () => {
 };
 ```
 
-### Example: Editing a website bot’s FreeStyle configuration  
+### Example: Editing a website bot’s FreeStyle configuration
 
 ```tsx
 import { useEffect, useState } from "react";
@@ -317,7 +316,11 @@ Navigate to `/home/Edit-Bot-Config/Website/FreeStyle/[id]` after selecting a bot
 We welcome contributions! Follow these steps to get started:
 
 1. **Fork** the repository.  
-2. **Clone** your fork locally: `git clone https://github.com/<your‑username>/NOVA-BOT-STUDIO.git`  
+2. **Clone** your fork locally:  
+   ```bash
+   git clone https://github.com/<your‑username>/NOVA-BOT-STUDIO.git
+   cd NOVA-BOT-STUDIO
+   ```  
 3. **Create a feature branch**: `git checkout -b feat/awesome-feature`  
 4. **Install dependencies** (`npm ci`) and set up the `.env.local` file.  
 5. **Make your changes**. Keep the code style consistent (run `npm run lint`).  
@@ -329,4 +332,13 @@ We welcome contributions! Follow these steps to get started:
 
 * Run `npm run dev` while editing – hot‑reloading will reflect changes instantly.  
 * Use the built‑in Zustand devtools (`window.__ZUSTAND_DEVTOOLS__`) to inspect store state.  
-* If you add new environment variables, prefix them with `NEXT
+* If you add new environment variables, prefix them with `NEXT_PUBLIC_` when they need to be exposed to the client.  
+* Update the README when you introduce new public features or breaking changes.
+
+---
+
+## License  
+
+This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
+
+---
