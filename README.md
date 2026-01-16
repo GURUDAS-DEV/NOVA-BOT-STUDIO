@@ -10,17 +10,17 @@
 
 ## Overview  
 
-Nova Bot Studio is a modern SaaS‑style dashboard built with **Next.js 16** and **TailwindCSS** that lets you:
+Nova Bot Studio is a modern SaaS‑style dashboard built with **Next.js 16** and **TailwindCSS** that lets you:
 
-* **Create** AI chat‑bots in minutes using a drag‑and‑drop UI.  
+* **Create** AI chat‑bots in minutes using a drag‑and‑drop visual flow editor.  
 * **Connect** to popular messaging platforms – Telegram, Discord, Instagram, WhatsApp – or a custom webhook.  
 * **Manage** bots, view real‑time statistics and control access from a unified admin panel.  
 
-The platform is fully **client‑side rendered** for a snappy experience, while the backend (hosted separately) provides authentication, bot orchestration and analytics via a REST API.
+The platform is fully **client‑side rendered** for a snappy experience, while a separate backend provides authentication, bot orchestration and analytics via a REST API.
 
 > **Target audience** – product managers, marketers, community managers, and developers who need a fast way to launch conversational agents without maintaining infrastructure.
 
-Current version: **v0.1.0** (development)
+**Current version:** `v0.1.0` (development)
 
 ---
 
@@ -39,8 +39,9 @@ Current version: **v0.1.0** (development)
 | **Animations** | UI transitions with `radix-ui` and `tw-animate-css` | ✅ Stable |
 | **3D Preview** | Interactive 3‑D bot avatar using `three` | 🟡 Experimental |
 | **Export / Import** | JSON export of bot configuration | ✅ Stable |
-| **API** | REST endpoints for auth, bot CRUD, analytics | ✅ Stable (backend) |
-| **Bot Config Editor** | Full‑screen “Edit Bot Config – Website FreeStyle” UI for fine‑grained website bot customization (supports per‑bot CSS, HTML snippets, and webhook overrides) | ✅ Stable |
+| **API** | REST endpoints for auth, bot CRUD, analytics (backend) | ✅ Stable |
+| **Bot Config Editor** | Full‑screen “Edit Bot Config – Website FreeStyle” UI for per‑bot HTML/CSS/JS customization | ✅ Stable |
+| **Export / Import** | JSON export/import of bot configurations | ✅ Stable |
 
 ---
 
@@ -48,17 +49,17 @@ Current version: **v0.1.0** (development)
 
 | Layer | Technology | Reason |
 |-------|------------|--------|
-| **Framework** | **Next.js 16** (React 19) | Server‑side rendering, file‑system routing, API routes |
-| **Language** | **TypeScript** | Type safety across the whole stack |
-| **Styling** | **TailwindCSS 4**, `tw-animate-css` | Utility‑first styling, fast prototyping |
-| **State Management** | **Zustand** | Minimalist global store (`useAuthStore`) |
+| **Framework** | **Next.js 16** (React 19) | File‑system routing, API routes, SSR/CSR hybrid |
+| **Language** | **TypeScript** | End‑to‑end type safety |
+| **Styling** | **TailwindCSS 4**, `tw-animate-css` | Utility‑first, rapid UI prototyping |
+| **State Management** | **Zustand** | Minimalist global store (`useAuthStore`, `useBotStore`) |
 | **UI Components** | **Radix UI**, `lucide-react`, `react-icons` | Accessible primitives & icons |
 | **Theming** | `next-themes` | Dark / Light mode |
-| **Animations** | `sonner`, `tw-animate-css` | Toasts & CSS animations |
+| **Animations** | `sonner`, `tw-animate-css` | Toasts & CSS‑based animations |
 | **3D** | `three` | Optional 3‑D bot preview |
 | **Utilities** | `clsx`, `class-variance-authority`, `dotenv` | Class handling & env loading |
-| **Email** | `resend` | Transactional email (e.g., password reset) |
-| **Testing / Linting** | `eslint`, `eslint-config-next` | Code quality |
+| **Email** | `resend` | Transactional email (password reset, invites) |
+| **Testing / Linting** | `eslint`, `eslint-config-next` | Code quality enforcement |
 | **Build** | `next build` (Vercel ready) | Optimized production bundles |
 
 ---
@@ -78,7 +79,7 @@ src/
 │  │   │       └─ Website/
 │  │   │           └─ FreeStyle/
 │  │   │               └─ (id)/
-│  │   │                   └─ page.tsx   ← New “Edit Bot Config – Website FreeStyle” page
+│  │   │                   └─ page.tsx   ← “Edit Bot Config – Website FreeStyle” page
 │  │   └─ …                    ← Other private sections (create, manage, stats)
 │  ├─ (public)       ← Public‑facing pages (landing, FAQ, pricing)
 │  │   └─ Footer.tsx
@@ -88,14 +89,15 @@ src/
 ├─ lib/
 │  ├─ Store/         ← Zustand stores (auth, bot data)
 │  ├─ Types/         ← TypeScript interfaces
-│  └─ utils.ts       ← Helper functions (API wrappers, formatters)
-└─ proxy.ts          ← API‑proxy for server‑side requests (if needed)
+│  ├─ analytics/     ← Analytics helpers
+│  └─ utils.ts       ← API wrappers, formatters, misc helpers
+└─ proxy.ts          ← Optional API‑proxy for server‑side requests
 ```
 
 * **Routing** – Next.js file‑system routing separates public and private routes using the `(public)` and `(private)` folders.  
-* **Auth** – `useAuthStore` holds `isLoggedIn`, `userId`, `username`, `email` and provides `refreshUser`/`logout`.  
+* **Auth** – `useAuthStore` holds `isLoggedIn`, `userId`, `username`, `email` and provides helpers like `refreshUser` and `logout`.  
 * **Environment** – `NEXT_PUBLIC_API_BASE_URL` points to the backend API (e.g., `https://api.nova-bot.studio`).  
-* **New Config Editor** – The `Edit-Bot-Config/Website/FreeStyle/(id)/page.tsx` component renders a rich editor that lets users modify HTML/CSS/JS snippets for a specific bot identified by `id`. All changes are persisted via the existing `/api/bots/:id` PATCH endpoint.  
+* **Config Editor** – The `Edit‑Bot‑Config/Website/FreeStyle/(id)/page.tsx` component renders a rich editor that lets users modify HTML/CSS/JS snippets for a specific bot (`id`). Changes are persisted via the backend PATCH endpoint `/api/bots/:id`.
 
 ---
 
@@ -108,9 +110,9 @@ src/
 | **Node.js** | 20.x |
 | **npm** | 10.x (or `pnpm`/`yarn` – same commands) |
 | **Git** | any recent version |
-| **Vercel CLI** (optional) | 32.x for local Vercel preview |
+| **Vercel CLI** (optional) | 32.x for local preview |
 
-You also need an **API backend** (not part of this repo) that implements the authentication and bot endpoints. The backend URL must be provided via `NEXT_PUBLIC_API_BASE_URL`.
+You also need a running **backend API** that implements authentication, bot CRUD and analytics. The backend URL must be supplied via `NEXT_PUBLIC_API_BASE_URL`.
 
 ### Installation  
 
@@ -122,24 +124,23 @@ cd NOVA-BOT-STUDIO
 # 2️⃣ Install dependencies
 npm ci   # or `pnpm install` / `yarn install`
 
-# 3️⃣ Create an .env file (see below)
+# 3️⃣ Copy the example env file
 cp .env.example .env.local
 ```
 
 ### Configuration  
 
-Create a `.env.local` file at the project root:
+Create a `.env.local` file at the project root (or edit the copied one):
 
 ```dotenv
 # Public – injected into the client bundle
 NEXT_PUBLIC_API_BASE_URL=https://api.yourdomain.com
 
 # Private – used only by server‑side code (if any)
-# Example: secret key for Resend email service
 RESEND_API_KEY=your_resend_api_key
 ```
 
-> **Note**: `NEXT_PUBLIC_` prefix is required for any variable accessed on the client side.
+> **Important:** Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. All other variables remain server‑only.
 
 ### Verify the installation  
 
@@ -147,7 +148,7 @@ RESEND_API_KEY=your_resend_api_key
 npm run dev
 ```
 
-Open <http://localhost:3000> – you should see the public landing page. After logging in (or using the mock auth flow), you’ll be redirected to the dashboard.
+Open <http://localhost:3000>. You should see the public landing page. After logging in (or using the mock auth flow), you’ll be redirected to the dashboard.
 
 ---
 
@@ -158,9 +159,10 @@ Open <http://localhost:3000> – you should see the public landing page. After l
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Starts the Next.js dev server (`http://localhost:3000`) with hot‑reloading. |
-| `npm run build` | Produces an optimized production build in `.next`. |
-| `npm start` | Runs the production build locally (`NODE_ENV=production`). |
+| `npm run build` | Generates an optimized production build in `.next`. |
+| `npm start` | Serves the production build locally (`NODE_ENV=production`). |
 | `npm run lint` | Lints the codebase using ESLint (Next.js config). |
+| `npm run test` | Placeholder – add Jest/Playwright tests here. |
 
 ### Example: Creating a bot (client side)  
 
@@ -271,13 +273,13 @@ export default function EditFreeStylePage() {
 }
 ```
 
-*Navigate to `/home/Edit-Bot-Config/Website/FreeStyle/[id]` after selecting a bot to open the editor.*
+Navigate to `/home/Edit-Bot-Config/Website/FreeStyle/[id]` after selecting a bot to open the editor.
 
-### UI navigation  
+### UI Navigation  
 
-* **Sidebar** – Click any navigation item (`Home`, `Create Bots`, `Manage Bots`, `Integrations`, `Edit Bot Config`) to load the corresponding page.  
+* **Sidebar** – Click any navigation item (`Home`, `Create Bot`, `Manage Bots`, `Integrations`, `Edit Bot Config`) to load the corresponding page.  
 * **TopBar** – Access user menu (profile, settings, logout) and toggle dark/light mode.  
-* **Responsive** – The layout collapses to a hamburger menu on screens < 768 px.
+* **Responsive** – Layout collapses to a hamburger menu on screens < 768 px.
 
 ### Screenshots  
 
@@ -285,78 +287,46 @@ export default function EditFreeStylePage() {
 |---|---|
 | ![Landing](public/LandingPageImage1.png) | ![Dashboard](public/LandingPageImage2.png) |
 
-*(Images are stored in `public/` – they render automatically when the app runs.)*
+*(Images are stored in `public/` and render automatically when the app runs.)*
 
 ---
 
-## Development  
+## API Documentation  
 
-### Setting up the local environment  
+> The backend API is **not** part of this repository. Below is a quick reference for the endpoints the frontend expects. Adjust the base URL via `NEXT_PUBLIC_API_BASE_URL`.
 
-```bash
-# Install husky pre‑commit hooks (optional)
-npx husky install
-```
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| `POST` | `/api/auth/login` | Authenticate a user, returns a session cookie. | ❌ |
+| `POST` | `/api/auth/logout` | Invalidate session cookie. | ✅ |
+| `GET` | `/api/bots` | List bots owned by the authenticated user. | ✅ |
+| `POST` | `/api/bots` | Create a new bot (name, platform, template). | ✅ |
+| `GET` | `/api/bots/:id` | Retrieve bot details, including `freeStyle` config. | ✅ |
+| `PATCH` | `/api/bots/:id` | Update bot fields (e.g., `freeStyle`). | ✅ |
+| `DELETE` | `/api/bots/:id` | Delete a bot. | ✅ |
+| `GET` | `/api/analytics/:botId` | Get real‑time stats for a bot (messages, uptime, etc.). | ✅ |
 
-### Running tests  
+**Authentication** – All protected routes require the session cookie set by the login endpoint. CORS must allow `credentials: true` and the origin of the frontend.
 
-> The repository currently contains no unit tests, but you can add Jest or Playwright. Example command:
-
-```bash
-npm run test   # (add a script in package.json when tests are added)
-```
-
-### Code style  
-
-* **ESLint** – Enforced via `npm run lint`.  
-* **Prettier** – Recommended – add a `.prettierrc` if you want automatic formatting.  
-
-### Debugging tips  
-
-* Use the browser devtools to inspect the Zustand store (`window.__ZUSTAND_DEVTOOLS__` if you enable it).  
-* API requests include `credentials: "include"` – make sure your backend sets proper CORS headers (`Access-Control-Allow-Credentials: true`).  
+**Error handling** – The API returns JSON with `{ error: string, code?: number }`. The frontend checks `res.ok` and logs the error payload when a request fails.
 
 ---
 
-## Deployment  
+## Contributing  
 
-### Vercel (recommended)  
+We welcome contributions! Follow these steps to get started:
 
-1. Push the repository to GitHub.  
-2. Import the project in the Vercel dashboard.  
-3. Set the environment variable `NEXT_PUBLIC_API_BASE_URL` in Vercel → Settings → Environment Variables.  
-4. Deploy – Vercel will run `npm install && npm run build` automatically.
+1. **Fork** the repository.  
+2. **Clone** your fork locally: `git clone https://github.com/<your‑username>/NOVA-BOT-STUDIO.git`  
+3. **Create a feature branch**: `git checkout -b feat/awesome-feature`  
+4. **Install dependencies** (`npm ci`) and set up the `.env.local` file.  
+5. **Make your changes**. Keep the code style consistent (run `npm run lint`).  
+6. **Commit** with a clear message: `git commit -m "feat: add awesome feature"`  
+7. **Push** to your fork: `git push origin feat/awesome-feature`  
+8. **Open a Pull Request** against `main`.  
 
-### Docker (alternative)  
+### Development workflow tips  
 
-```dockerfile
-# Dockerfile
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-FROM node:20-alpine AS runner
-WORKDIR /app
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package*.json ./
-ENV NODE_ENV=production
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
-Build & run:
-
-```bash
-docker build -t nova-bot-studio .
-docker run -p 3000:3000 -e NEXT_PUBLIC_API_BASE_URL=https://api.example.com nova-bot-studio
-```
-
-### Performance considerations  
-
-* Enable **image optimization** (`next/image`) – already used for the logo.  
-* Use **incremental static regeneration** for public pages if you add them later.  
-* Keep the **
+* Run `npm run dev` while editing – hot‑reloading will reflect changes instantly.  
+* Use the built‑in Zustand devtools (`window.__ZUSTAND_DEVTOOLS__`) to inspect store state.  
+* If you add new environment variables, prefix them with `NEXT
