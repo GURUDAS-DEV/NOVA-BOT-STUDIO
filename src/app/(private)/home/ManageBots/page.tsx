@@ -529,14 +529,14 @@ const ManageBotsPage = () => {
                       toast.error(
                         "Complete the bot configration to unlock analytics."
                       );
-                    else{
-                      router.push(`/home/Bot-Analytics?id=${bot._id}`);
-                    };
+                    else {
+                      router.push(`/home/Bot-Analytics/${bot._id}`);
+                    }
                   }}
                   className={`w-full justify-start gap-2 font-inter  ${
-                    bot.status === "active"
-                      ? "text-black dark:text-white border-gray-300 dark:border-stone-700"
-                      : "text-green-500 dark:text-gray-500 border-gray-300 dark:bg-stone-800 cursor-not-allowed"
+                    bot.status === "draft"
+                      ? "text-black dark:text-white border-gray-300 dark:border-stone-700 cursor-not-allowed"
+                      : "text-green-500 dark:text-white border-gray-300 dark:bg-stone-600 "
                   } `}
                 >
                   <MdBarChart className="w-4 h-4" />
@@ -548,7 +548,7 @@ const ManageBotsPage = () => {
                   className={`w-full  justify-start gap-2 font-inter text-black dark:text-white border-gray-300 dark:border-stone-700 ${
                     bot.status === "draft"
                       ? "text-green-500 dark:text-gray-500 border-gray-300 dark:bg-stone-800 cursor-not-allowed hover:bg-stone-800"
-                      : "text-black dark:text-white border-gray-300 dark:border-stone-700"
+                      : "text-black dark:text-white   "
                   }`}
                 >
                   {botStatusShow(bot)}

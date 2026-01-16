@@ -11,7 +11,6 @@ import {
 import { 
   MdOutlineWeb,
   MdChat,
-  MdSearch,
   MdAutoMode,
   MdCheckCircle
 } from "react-icons/md";
@@ -24,7 +23,6 @@ import { toast, Toaster } from "sonner";
 
 const CreateBotPage = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
-  const [botType, setBotType] = useState<string | null>(null);
   const [botName, setBotName] = useState<string>("");
   const [botDescription, setBotDescription] = useState<string>("");
   const [botStyle, setBotStyle] = useState<string | null>(null);
@@ -78,30 +76,6 @@ const CreateBotPage = () => {
     },
   ];
 
-  const botTypes = [
-    {
-      id: "chatbot",
-      title: "AI Chatbot",
-      description: "Natural conversations powered by AI",
-      icon: MdChat,
-      color: "text-purple-500"
-    },
-    {
-      id: "search",
-      title: "Search Bot",
-      description: "Search movies, data, FAQs, and more",
-      icon: MdSearch,
-      color: "text-blue-500"
-    },
-    {
-      id: "automation",
-      title: "Automation Bot",
-      description: "Auto-replies, workflows, and triggers",
-      icon: MdAutoMode,
-      color: "text-orange-500"
-    },
-  ];
-
   const botStyles = [
     {
       id: "FreeStyle",
@@ -125,7 +99,7 @@ const CreateBotPage = () => {
     const configs: Record<string, string> = {
       Telegram: "Bot Token will be required in the next step",
       Discord: "Server connection will be configured next",
-      API: "Embeddable widget code will be generated",
+      Website: "API Key will be provided for integration",
       Instagram: "Business account connection required",
       WhatsApp: "Business account verification needed",
     };
@@ -147,12 +121,6 @@ const CreateBotPage = () => {
       return;
     }
 
-    if (!botType) {
-      console.log("Error: Bot type is required");
-      toast.error("Please select a bot purpose");
-      return;
-    }
-
     // If Website platform is selected, bot style is required
     if (selectedPlatform === "API" && !botStyle) {
       console.log("Error: Bot style is required for Website platform");
@@ -169,7 +137,6 @@ const CreateBotPage = () => {
         credentials: 'include',
         body: JSON.stringify({
           platform: selectedPlatform,
-          purpose : botType,
           botName : botName,
           botDescription : botDescription,
           style : botStyle,
@@ -309,7 +276,7 @@ const CreateBotPage = () => {
         </div>
 
         {/* 3. Bot Purpose / Type */}
-        <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 rounded-xl p-6 space-y-5">
+        {/* <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 rounded-xl p-6 space-y-5">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 font-outfit">
               Bot Purpose
@@ -348,7 +315,7 @@ const CreateBotPage = () => {
               );
             })}
           </div>
-        </div>
+        </div> */}
 
         {/* 4. Bot Style (Only for Website/API) */}
         {selectedPlatform === "Website" && (
@@ -409,7 +376,6 @@ const CreateBotPage = () => {
             disabled={
               !botName.trim() || 
               !selectedPlatform || 
-              !botType || 
               (selectedPlatform === "API" && !botStyle)
             }
             className="px-8 py-5 bg-pink-600 hover:bg-pink-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-400 text-white font-inter transition-all"

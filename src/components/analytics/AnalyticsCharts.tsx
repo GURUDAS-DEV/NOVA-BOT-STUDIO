@@ -156,7 +156,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex bg-white dark:bg-stone-950 items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
@@ -172,8 +172,37 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
 
   if (data.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-card p-8 text-center">
-        <p className="text-muted-foreground">No analytics data available</p>
+      <div className="rounded-lg border border-border bg-card p-12 text-center dark:bg-slate-900 dark:border-slate-700">
+        <div className="mx-auto max-w-md">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted dark:bg-slate-800">
+            <svg
+              className="h-8 w-8 text-muted-foreground dark:text-slate-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-foreground dark:text-slate-100 mb-2">
+            No Analytics Data Yet
+          </h3>
+          <p className="text-sm text-muted-foreground dark:text-slate-400 mb-4">
+            Start using your bot to generate analytics data. Metrics will appear here once your bot receives requests.
+          </p>
+          <div className="text-xs text-muted-foreground dark:text-slate-500 space-y-1">
+            <p>💡 Analytics include:</p>
+            <p>• Request volumes and trends</p>
+            <p>• Token usage and costs</p>
+            <p>• Performance metrics</p>
+            <p>• Model usage breakdown</p>
+          </div>
+        </div>
       </div>
     );
   }
