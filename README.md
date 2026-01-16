@@ -1,6 +1,6 @@
 # Nova Bot Studio  
 
-![Next.js](https://img.shields.io/badge/Next.js-16.0.7-000000?logo=nextdotjs) ![React](https://img.shields.io/badge/React-19.2.0-61DAFB?logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6?logo=typescript) ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.0-38B2AC?logo=tailwindcss) ![License](https://img.shields.io/badge/License-MIT-green) ![GitHub last commit](https://img.shields.io/github/last-commit/GURUDAS-DEV/NOVA-BOT-STUDIO)  
+![Next.js](https://img.shields.io/badge/Next.js-16.0.7-000000?logo=nextdotjs) ![React](https://img.shields.io/badge/React-19.2.0-61DAFB?logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6?logo=typescript) ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.0-38B2AC?logo=tailwindcss) ![License](https://img.shields.io/badge/License-MIT-green) ![GitHub last commit](https://img.shields.io/github/last-commit/GURUDAS-DEV/NOVA-BOT-STUDIO) ![CI](https://github.com/GURUDAS-DEV/NOVA-BOT-STUDIO/actions/workflows/ci.yml/badge.svg)  
 
 **The ultimate AI‑powered bot platform for automation – design, integrate and manage bots without writing code.**  
 
@@ -20,7 +20,7 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 
 > **Target audience** – product managers, marketers, community managers, and developers who need a fast way to launch conversational agents without maintaining infrastructure.
 
-**Current version:** `v0.1.0` (development)
+**Current version:** `v0.2.0` (development)
 
 ---
 
@@ -41,6 +41,7 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 | **Export / Import** | JSON export/import of bot configurations | ✅ Stable |
 | **API** | REST endpoints for auth, bot CRUD, analytics (backend) | ✅ Stable |
 | **Bot Config Editor** | Full‑screen “Edit Bot Config – Website FreeStyle” UI for per‑bot HTML/CSS/JS customization | ✅ Stable |
+| **Deployment** | One‑click Vercel deployment & Docker support | ✅ Stable |
 
 ---
 
@@ -59,7 +60,7 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 | **Utilities** | `clsx`, `class-variance-authority`, `dotenv` | Class handling & env loading |
 | **Email** | `resend` | Transactional email (password reset, invites) |
 | **Testing / Linting** | `eslint`, `eslint-config-next` | Code quality enforcement |
-| **Build** | `next build` (Vercel ready) | Optimized production bundles |
+| **Build & Deploy** | `next build`, Vercel, Docker | Optimized production bundles & containerisation |
 
 ---
 
@@ -107,9 +108,10 @@ src/
 | Tool | Minimum version |
 |------|-----------------|
 | **Node.js** | 20.x |
-| **npm** | 10.x (or `pnpm`/`yarn` – same commands) |
+| **npm** | 10.x (or `pnpm` / `yarn` – same commands) |
 | **Git** | any recent version |
 | **Vercel CLI** (optional) | 32.x for local preview |
+| **Docker** (optional) | 24.x for containerised dev |
 
 A running **backend API** that implements authentication, bot CRUD and analytics is required. Supply its URL via `NEXT_PUBLIC_API_BASE_URL`.
 
@@ -162,6 +164,7 @@ Open <http://localhost:3000>. You should see the public landing page. After logg
 | `npm start` | Serves the production build locally (`NODE_ENV=production`). |
 | `npm run lint` | Lints the codebase using ESLint (Next.js config). |
 | `npm run test` | Placeholder – add Jest/Playwright tests here. |
+| `npm run format` | Runs Prettier to format all files. |
 
 ### Example: Creating a bot (client side)
 
@@ -290,6 +293,46 @@ Navigate to `/home/Edit-Bot-Config/Website/FreeStyle/[id]` after selecting a bot
 
 ---
 
+## Deployment  
+
+### Vercel (recommended)
+
+1. Sign in to [Vercel](https://vercel.com) and import the repository.  
+2. Set the following environment variables in the Vercel dashboard:  
+
+   | Name | Value |
+   |------|-------|
+   | `NEXT_PUBLIC_API_BASE_URL` | `https://api.yourdomain.com` |
+   | `RESEND_API_KEY` | *(your Resend key)* |
+
+3. Deploy – Vercel will automatically run `npm ci && npm run build` and serve the app on a generated URL.  
+
+### Docker
+
+```bash
+# Build the image
+docker build -t nova-bot-studio:latest .
+
+# Run the container (replace env vars as needed)
+docker run -p 3000:3000 \
+  -e NEXT_PUBLIC_API_BASE_URL=https://api.yourdomain.com \
+  -e RESEND_API_KEY=your_resend_api_key \
+  nova-bot-studio:latest
+```
+
+The app will be reachable at <http://localhost:3000>.
+
+### Self‑Hosted (Node)
+
+```bash
+npm run build
+npm start   # runs `next start` on port 3000 by default
+```
+
+Make sure the environment variables are present in `.env.production` or exported in the shell.
+
+---
+
 ## API Documentation  
 
 > The backend API is **not** part of this repository. Below is a quick reference for the endpoints the frontend expects. Adjust the base URL via `NEXT_PUBLIC_API_BASE_URL`.
@@ -317,28 +360,11 @@ We welcome contributions! Follow these steps to get started:
 
 1. **Fork** the repository.  
 2. **Clone** your fork locally:  
+
    ```bash
    git clone https://github.com/<your‑username>/NOVA-BOT-STUDIO.git
    cd NOVA-BOT-STUDIO
    ```  
+
 3. **Create a feature branch**: `git checkout -b feat/awesome-feature`  
-4. **Install dependencies** (`npm ci`) and set up the `.env.local` file.  
-5. **Make your changes**. Keep the code style consistent (run `npm run lint`).  
-6. **Commit** with a clear message: `git commit -m "feat: add awesome feature"`  
-7. **Push** to your fork: `git push origin feat/awesome-feature`  
-8. **Open a Pull Request** against `main`.  
-
-### Development workflow tips  
-
-* Run `npm run dev` while editing – hot‑reloading will reflect changes instantly.  
-* Use the built‑in Zustand devtools (`window.__ZUSTAND_DEVTOOLS__`) to inspect store state.  
-* If you add new environment variables, prefix them with `NEXT_PUBLIC_` when they need to be exposed to the client.  
-* Update the README when you introduce new public features or breaking changes.
-
----
-
-## License  
-
-This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
-
----
+4. **Install dependencies** (`npm ci`) and set up the
