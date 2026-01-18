@@ -195,7 +195,7 @@ export default function ControlledBotBuilder() {
     ? (selectedNode.executor.type as "api" | "llm")
     : "none";
 
-  // Test API and automatically generate options
+  // Test API connectivity only
   const testApiOptions = async () => {
     if (!selectedNode?.executor || selectedNode.executor.type !== "api") {
       setTestError("No API executor configured");
@@ -223,32 +223,9 @@ export default function ControlledBotBuilder() {
         throw new Error(`API returned ${response.status}: ${response.statusText}`);
       }
 
-      const data = (await response.json()) as Record<string, unknown>;
+      await response.json();
       
-      // Auto-detect array in response
-      let dataArray: unknown[] = [];
-      if (Array.isArray(data)) {
-        dataArray = data;
-      } else {
-        // Try to find first array in response
-        for (const key in data) {
-          if (Array.isArray(data[key])) {
-            dataArray = data[key] as unknown[];
-            break;
-          }
-        }
-      }
-
-      if (dataArray.length === 0) {
-        throw new Error("No array data found in API response");
-      }
-
-      const extracted = dataArray.map((item: unknown) => ({
-        label: String(item),
-        value: String(item),
-      }));
-
-      setTestData(extracted);
+      setTestData([{ label: "API is working correctly!", value: "success" }]);
     } catch (error) {
       setTestError(error instanceof Error ? error.message : "Unknown error occurred");
     } finally {
@@ -257,20 +234,17 @@ export default function ControlledBotBuilder() {
   };
 
   // Link tested option to target node
-  const linkTestedOption = (label: string, value: string, nextNodeId: string) => {
-    if (!nextNodeId) {
-      toast.error("Please select a target node");
-      return;
-    }
-
+  const addActionOption = (actionType: "back" | "end") => {
+    const label = actionType === "back" ? "go back" : "end conversation";
     const newOption: BotOption = {
       id: `opt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       label,
-      nextNodeId,
+      nextNodeId: "",
+      actionType,
     };
 
     updateNode(selectedNodeId, "options", [...(selectedNode?.options || []), newOption]);
-    toast.success(`Option "${label}" linked to target node`);
+    toast.success(`Option "${label}" added`);
   };
 
 
@@ -440,22 +414,24 @@ export default function ControlledBotBuilder() {
               </div>
             </div>
 
-            {/* Link to next node */}
-            <div className="mb-6 p-4 bg-stone-800/50 rounded-lg border border-stone-700">
-              <label className="block text-sm font-medium mb-3">Link to Node</label>
-              <select
-                value={selectedOption.nextNodeId || ""}
-                onChange={(e) => updateOption(selectedNodeId, selectedOptionId!, "nextNodeId", e.target.value)}
-                className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white"
-              >
-                <option value="">-- Select a node --</option>
-                {bot.nodes.map((node) => (
-                  <option key={node.id} value={node.id}>
-                    {node.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Link to next node - Hidden for back/end actions */}
+            {selectedOption.actionType === "normal" && (
+              <div className="mb-6 p-4 bg-stone-800/50 rounded-lg border border-stone-700">
+                <label className="block text-sm font-medium mb-3">Link to Node</label>
+                <select
+                  value={selectedOption.nextNodeId || ""}
+                  onChange={(e) => updateOption(selectedNodeId, selectedOptionId!, "nextNodeId", e.target.value)}
+                  className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white"
+                >
+                  <option value="">-- Select a node --</option>
+                  {bot.nodes.map((node) => (
+                    <option key={node.id} value={node.id}>
+                      {node.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <Button
               onClick={() => {
@@ -692,89 +668,13 @@ export default function ControlledBotBuilder() {
                 <option value="options">options</option>
                 <option value="end">end</option>
               </select>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={selectedNode.output.controls?.allowBack || false}
-                    onChange={(e) =>
-                      updateNodeNested(selectedNodeId, "output", {
-                        ...selectedNode.output,
-                        controls: {
-                          ...selectedNode.output.controls,
-                          allowBack: e.target.checked,
-                        },
-                      })
-                    }
-                    disabled
-                  />
-                  Allow Back (set per option)
-                </label>
-                <label className="flex items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={selectedNode.output.controls?.allowEnd || false}
-                    onChange={(e) =>
-                      updateNodeNested(selectedNodeId, "output", {
-                        ...selectedNode.output,
-                        controls: {
-                          ...selectedNode.output.controls,
-                          allowEnd: e.target.checked,
-                        },
-                      })
-                    }
-                    disabled
-                  />
-                  Allow End (set per option)
-                </label>
-              </div>
+              
 
               {/* Options editor enable only if output type is options */}
               {selectedNode.output.type === "options" && (
                 <div className="mt-4">
-                  {/* Options Source Selector (only show when executor is API) */}
+                  {/* API Executor - Show Test Button and Action Options */}
                   {currentExecutorType === "api" && (
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium mb-2">Options Source</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => {
-                            updateNode(selectedNodeId, "optionsSource", "static");
-                            updateNode(selectedNodeId, "apiResponseMapping", undefined);
-                          }}
-                          className={`p-2 rounded-lg border text-xs ${
-                            selectedNode.optionsSource === "static"
-                              ? "bg-pink-600/20 border-pink-600"
-                              : "bg-stone-800 border-stone-700 hover:border-pink-600/50"
-                          }`}
-                        >
-                          Static (Manual)
-                        </button>
-                        <button
-                          onClick={() => {
-                            updateNode(selectedNodeId, "optionsSource", "dynamic");
-                            updateNode(selectedNodeId, "options", []);
-                            updateNode(selectedNodeId, "apiResponseMapping", {
-                              dataField: "",
-                              labelField: "",
-                              valueField: "",
-                              nextNodeId: "",
-                            });
-                          }}
-                          className={`p-2 rounded-lg border text-xs ${
-                            selectedNode.optionsSource === "dynamic"
-                              ? "bg-pink-600/20 border-pink-600"
-                              : "bg-stone-800 border-stone-700 hover:border-pink-600/50"
-                          }`}
-                        >
-                          Dynamic (API)
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Test Button - Auto generates options from API */}
-                  {currentExecutorType === "api" && selectedNode.optionsSource === "dynamic" && (
                     <div className="p-4 bg-stone-800/50 rounded-lg border border-stone-700 space-y-3">
                       <Button
                         onClick={testApiOptions}
@@ -791,78 +691,66 @@ export default function ControlledBotBuilder() {
                         </div>
                       )}
 
-                      {/* Test Results */}
+                      {/* Test Success */}
                       {testData && testData.length > 0 && (
-                        <div className="p-3 bg-green-900/30 border border-green-700 rounded-lg space-y-2">
-                          <p className="text-xs text-green-300 font-medium">Found {testData.length} options</p>
-                          <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {testData.map((item, idx) => (
-                              <div key={idx} className="flex items-center gap-2 p-2 bg-stone-800 rounded border border-stone-600">
-                                <div className="flex-1">
-                                  <div className="text-xs font-medium text-white">{item.label}</div>
-                                </div>
-                                <select
-                                  defaultValue=""
-                                  onChange={(e) => {
-                                    if (e.target.value) {
-                                      linkTestedOption(item.label, item.value, e.target.value);
-                                    }
-                                  }}
-                                  className="bg-stone-700 border border-stone-600 rounded px-2 py-1 text-xs text-white"
-                                >
-                                  <option value="">Link to...</option>
-                                  {bot.nodes.map((node) => (
-                                    <option key={node.id} value={node.id}>
-                                      {node.title}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            ))}
-                          </div>
+                        <div className="p-3 bg-green-900/30 border border-green-700 rounded-lg">
+                          <p className="text-xs text-green-300 font-medium">✓ API is working correctly and will return {selectedNode.output.type} at runtime of bot.</p>
                         </div>
                       )}
 
-                      {/* No results message */}
-                      {testData && testData.length === 0 && (
-                        <div className="p-3 bg-yellow-900/30 border border-yellow-700 rounded-lg">
-                          <p className="text-xs text-yellow-300">No options found in API response</p>
+                      {/* Add Action Options */}
+                      <div className="pt-3 border-t border-stone-600">
+                        <label className="block text-sm font-medium mb-3">Add Special Actions</label>
+                        <div className="space-y-2">
+                          <Button
+                            onClick={() => addActionOption("back")}
+                            disabled={selectedNode.options.some((o) => o.actionType === "back")}
+                            size="sm"
+                            className="w-full bg-stone-700 hover:bg-stone-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            + Add &quot;Go Back&quot;
+                          </Button>
+                          <Button
+                            onClick={() => addActionOption("end")}
+                            disabled={selectedNode.options.some((o) => o.actionType === "end")}
+                            size="sm"
+                            className="w-full bg-stone-700 hover:bg-stone-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            + Add &quot;End Conversation&quot;
+                          </Button>
                         </div>
-                      )}
+                      </div>
 
-                      {/* Linked Options Summary */}
+                      {/* Action Options Summary */}
                       {selectedNode.options.length > 0 && (
                         <div className="mt-4">
-                          <label className="block text-sm font-medium mb-2">Linked Options ({selectedNode.options.length})</label>
+                          <label className="block text-sm font-medium mb-2">Added Options ({selectedNode.options.length})</label>
                           <div className="space-y-2">
-                            {selectedNode.options.map((option) => {
-                              const targetNode = bot.nodes.find((n) => n.id === option.nextNodeId);
-                              return (
-                                <div
-                                  key={option.id}
-                                  className="p-3 bg-stone-800 border border-green-700 rounded-lg cursor-pointer hover:border-pink-600 transition-all flex items-start justify-between"
-                                >
-                                  <div className="flex-1">
-                                    <div className="font-medium text-sm text-white">{option.label}</div>
-                                    <div className="text-xs text-stone-400">→ {targetNode?.title || "Unknown Node"}</div>
-                                  </div>
-                                  <button
-                                    onClick={() => deleteOption(selectedNodeId, option.id)}
-                                    className="text-red-400 hover:text-red-300 text-xs"
-                                  >
-                                    Remove
-                                  </button>
+                            {selectedNode.options.map((option) => (
+                              <div
+                                key={option.id}
+                                className="p-3 bg-stone-800 border border-green-700 rounded-lg flex items-start justify-between"
+                              >
+                                <div className="flex-1">
+                                  <div className="font-medium text-sm text-white">{option.label}</div>
+                                  <div className="text-xs text-stone-400">{option.actionType === "back" ? "Goes back" : "Ends conversation"}</div>
                                 </div>
-                              );
-                            })}
+                                <button
+                                  onClick={() => deleteOption(selectedNodeId, option.id)}
+                                  className="text-red-400 hover:text-red-300 text-xs"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* Static Options (when not API-driven) */}
-                  {selectedNode.optionsSource !== "dynamic" && (
+                  {/* Non-API Executor - Show Standard Options */}
+                  {currentExecutorType !== "api" && (
                     <>
                       <div className="flex items-center justify-between mb-4">
                         <label className="block text-sm font-medium">Options ({selectedNode.options.length}/5)</label>
