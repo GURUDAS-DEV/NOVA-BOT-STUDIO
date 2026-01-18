@@ -20,7 +20,7 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 
 > **Target audience** – product managers, marketers, community managers, and developers who need a fast way to launch conversational agents without maintaining infrastructure.
 
-**Current version:** `v0.2.0` (development)
+**Current version:** `v0.2.1` (development)
 
 ---
 
@@ -42,6 +42,8 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 | **API** | REST endpoints for auth, bot CRUD, analytics (backend) | ✅ Stable |
 | **Bot Config Editor** | Full‑screen “Edit Bot Config – Website FreeStyle” UI for per‑bot HTML/CSS/JS customization | ✅ Stable |
 | **Deployment** | One‑click Vercel deployment & Docker support | ✅ Stable |
+| **Analytics** | Built‑in usage analytics visualised in the dashboard | ✅ Stable |
+| **Internationalisation** | Basic i18n support for UI strings | 🟡 Beta |
 
 ---
 
@@ -59,7 +61,7 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 | **3D** | `three` | Optional 3‑D bot preview |
 | **Utilities** | `clsx`, `class-variance-authority`, `dotenv` | Class handling & env loading |
 | **Email** | `resend` | Transactional email (password reset, invites) |
-| **Testing / Linting** | `eslint`, `eslint-config-next` | Code quality enforcement |
+| **Testing / Linting** | `eslint`, `eslint-config-next`, `prettier` | Code quality enforcement |
 | **Build & Deploy** | `next build`, Vercel, Docker | Optimized production bundles & containerisation |
 
 ---
@@ -293,6 +295,40 @@ Navigate to `/home/Edit-Bot-Config/Website/FreeStyle/[id]` after selecting a bot
 
 ---
 
+## Development  
+
+### Setting up the development environment  
+
+```bash
+# Install dependencies (already done in Getting Started)
+npm ci
+
+# Run the dev server
+npm run dev
+```
+
+### Testing  
+
+> **Note:** The repository currently contains placeholder scripts. Add your preferred testing framework (e.g., Jest, Playwright) and update `package.json` accordingly.
+
+```bash
+npm run test
+```
+
+### Code style  
+
+* **Linting** – `npm run lint` uses ESLint with the Next.js preset.  
+* **Formatting** – `npm run format` runs Prettier.  
+* **Commit messages** – Follow the Conventional Commits specification for easier changelog generation.
+
+### Debugging tips  
+
+* Use the browser’s DevTools to inspect network requests to `NEXT_PUBLIC_API_BASE_URL`.  
+* The `useAuthStore` and `useBotStore` hooks expose their state via the React DevTools extension.  
+* Enable verbose logging in `src/lib/utils.ts` by setting `NEXT_PUBLIC_DEBUG=true` in `.env.local`.
+
+---
+
 ## Deployment  
 
 ### Vercel (recommended)
@@ -304,8 +340,9 @@ Navigate to `/home/Edit-Bot-Config/Website/FreeStyle/[id]` after selecting a bot
    |------|-------|
    | `NEXT_PUBLIC_API_BASE_URL` | `https://api.yourdomain.com` |
    | `RESEND_API_KEY` | *(your Resend key)* |
+   | `NEXT_PUBLIC_DEBUG` | `false` |
 
-3. Deploy – Vercel will automatically run `npm ci && npm run build` and serve the app on a generated URL.  
+3. Deploy – Vercel will automatically run `npm ci && npm run build` and serve the app on a generated URL.
 
 ### Docker
 
@@ -317,6 +354,7 @@ docker build -t nova-bot-studio:latest .
 docker run -p 3000:3000 \
   -e NEXT_PUBLIC_API_BASE_URL=https://api.yourdomain.com \
   -e RESEND_API_KEY=your_resend_api_key \
+  -e NODE_ENV=production \
   nova-bot-studio:latest
 ```
 
@@ -340,31 +378,4 @@ Make sure the environment variables are present in `.env.production` or exported
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | `POST` | `/api/auth/login` | Authenticate a user, returns a session cookie. | ❌ |
-| `POST` | `/api/auth/logout` | Invalidate session cookie. | ✅ |
-| `GET` | `/api/bots` | List bots owned by the authenticated user. | ✅ |
-| `POST` | `/api/bots` | Create a new bot (name, platform, template). | ✅ |
-| `GET` | `/api/bots/:id` | Retrieve bot details, including `freeStyle` config. | ✅ |
-| `PATCH` | `/api/bots/:id` | Update bot fields (e.g., `freeStyle`). | ✅ |
-| `DELETE` | `/api/bots/:id` | Delete a bot. | ✅ |
-| `GET` | `/api/analytics/:botId` | Get real‑time stats for a bot (messages, uptime, etc.). | ✅ |
-
-**Authentication** – All protected routes require the session cookie set by the login endpoint. CORS must allow `credentials: true` and the origin of the frontend.
-
-**Error handling** – The API returns JSON with `{ error: string, code?: number }`. The frontend checks `res.ok` and logs the error payload when a request fails.
-
----
-
-## Contributing  
-
-We welcome contributions! Follow these steps to get started:
-
-1. **Fork** the repository.  
-2. **Clone** your fork locally:  
-
-   ```bash
-   git clone https://github.com/<your‑username>/NOVA-BOT-STUDIO.git
-   cd NOVA-BOT-STUDIO
-   ```  
-
-3. **Create a feature branch**: `git checkout -b feat/awesome-feature`  
-4. **Install dependencies** (`npm ci`) and set up the
+| `POST` | `/api/auth/logout` | Invalidate session cookie. |
