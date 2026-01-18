@@ -373,9 +373,4 @@ Make sure the environment variables are present in `.env.production` or exported
 
 ## API Documentation  
 
-> The backend API is **not** part of this repository. Below is a quick reference for the endpoints the frontend expects. Adjust the base URL via `NEXT_PUBLIC_API_BASE_URL`.
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| `POST` | `/api/auth/login` | Authenticate a user, returns a session cookie. | ❌ |
-| `POST` | `/api/auth/logout` | Invalidate session cookie. |
+> The backend API is **not** part of this repository. Below is a quick reference for the endpoints the frontend expects. Adjust the base URL via `
