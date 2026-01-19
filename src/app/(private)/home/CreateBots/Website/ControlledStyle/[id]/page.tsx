@@ -14,11 +14,16 @@ interface BotOption {
 }
 
 // Node-centric FSM schema
-type ApiExecutorConfig = { endpoint: string; method: "GET" | "POST" | "PUT" };
-type LlmExecutorConfig = { prompt: string };
+type ApiExecutorConfig = { endpoint: string; method: "GET" };
+type InputExecutorConfig = {
+  key: string;
+  type: "text" | "number";
+  validation?: string;
+  retryLimit?: number;
+};
 type Executor =
   | { type: "api"; config: ApiExecutorConfig }
-  | { type: "llm"; config: LlmExecutorConfig };
+  | { type: "input"; config: InputExecutorConfig };
 
 interface BotNode {
   id: string;
@@ -31,8 +36,11 @@ interface BotNode {
     retryLimit?: number;
   };
   executor?: Executor;
+  // Next node ID for input executor
+  inputNextNodeId?: string;
   output: {
     type: "text" | "options" | "end";
+    customText?: string; // Custom text to display when output type is "text"
     controls?: {
       allowBack?: boolean;
       allowEnd?: boolean;
@@ -78,7 +86,7 @@ export default function ControlledBotBuilder() {
         title: "Order Details",
         message: "Please enter your order number:",
         input: { key: "orderNumber", type: "text", validation: "^\\d{6,}$", retryLimit: 2 },
-        executor: { type: "api", config: { endpoint: "https://api.example.com/orders", method: "POST" } },
+        executor: { type: "api", config: { endpoint: "https://api.example.com/orders", method: "GET" } },
         output: { type: "text", controls: { allowBack: true, allowEnd: true } },
         optionsSource: "static",
         options: [],
@@ -169,7 +177,7 @@ export default function ControlledBotBuilder() {
       return;
     }
     const newOptionId = `opt-${Date.now()}`;
-    const newOption: BotOption = { id: newOptionId, label: "New Option", nextNodeId: "" };
+    const newOption: BotOption = { id: newOptionId, label: "New Option", nextNodeId: "", actionType: "normal" };
     updateNode(nodeId, "options", [...(selectedNode?.options || []), newOption]);
   };
 
@@ -181,18 +189,18 @@ export default function ControlledBotBuilder() {
   };
 
   // Executor selector helpers
-  const setExecutorType = (nodeId: string, type: "none" | "api" | "llm") => {
+  const setExecutorType = (nodeId: string, type: "none" | "api" | "input") => {
     if (type === "none") {
       updateNodeNested(nodeId, "executor", undefined);
     } else if (type === "api") {
       updateNodeNested(nodeId, "executor", { type: "api", config: { endpoint: "", method: "GET" } });
     } else {
-      updateNodeNested(nodeId, "executor", { type: "llm", config: { prompt: "" } });
+      updateNodeNested(nodeId, "executor", { type: "input", config: { key: "", type: "text" } });
     }
   };
 
-  const currentExecutorType: "none" | "api" | "llm" = selectedNode?.executor?.type
-    ? (selectedNode.executor.type as "api" | "llm")
+  const currentExecutorType: "none" | "api" | "input" = selectedNode?.executor?.type
+    ? (selectedNode.executor.type as "api" | "input")
     : "none";
 
   // Test API connectivity only
@@ -234,19 +242,7 @@ export default function ControlledBotBuilder() {
   };
 
   // Link tested option to target node
-  const addActionOption = (actionType: "back" | "end") => {
-    const label = actionType === "back" ? "go back" : "end conversation";
-    const newOption: BotOption = {
-      id: `opt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      label,
-      nextNodeId: "",
-      actionType,
-    };
-
-    updateNode(selectedNodeId, "options", [...(selectedNode?.options || []), newOption]);
-    toast.success(`Option "${label}" added`);
-  };
-
+  
 
 
   return (
@@ -401,7 +397,7 @@ export default function ControlledBotBuilder() {
                     onChange={(e) => {
                       if (e.target.checked) {
                         updateOption(selectedNodeId, selectedOptionId!, "actionType", "end");
-                        updateOption(selectedNodeId, selectedOptionId!, "label", "end conversation");
+                        updateOption(selectedNodeId, selectedOptionId!, "label", "End Conversation");
                       } else if (selectedOption.actionType === "end") {
                         updateOption(selectedNodeId, selectedOptionId!, "actionType", "normal");
                         updateOption(selectedNodeId, selectedOptionId!, "label", "New Option");
@@ -415,7 +411,7 @@ export default function ControlledBotBuilder() {
             </div>
 
             {/* Link to next node - Hidden for back/end actions */}
-            {selectedOption.actionType === "normal" && (
+            {(!selectedOption.actionType || selectedOption.actionType === "normal") && (
               <div className="mb-6 p-4 bg-stone-800/50 rounded-lg border border-stone-700">
                 <label className="block text-sm font-medium mb-3">Link to Node</label>
                 <select
@@ -474,87 +470,11 @@ export default function ControlledBotBuilder() {
               />
             </div>
 
-            {/* Input schema */}
-            <div className="mb-6 p-4 bg-stone-800/50 rounded-lg border border-stone-700 space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">User Input (optional)</label>
-                <Button
-                  size="sm"
-                  className="bg-stone-700 hover:bg-stone-600"
-                  onClick={() =>
-                    updateNodeNested(selectedNodeId, "input", selectedNode.input ? undefined : { key: "", type: "text" })
-                  }
-                >
-                  {selectedNode.input ? "Remove" : "Add"}
-                </Button>
-              </div>
-              {selectedNode.input && (
-                <div className="grid grid-cols-1 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Key</label>
-                    <input
-                      type="text"
-                      value={selectedNode.input.key}
-                      onChange={(e) =>
-                        updateNodeNested(selectedNodeId, "input", { ...selectedNode.input!, key: e.target.value })
-                      }
-                      className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Type</label>
-                    <select
-                      value={selectedNode.input.type}
-                      onChange={(e) =>
-                        updateNodeNested(selectedNodeId, "input", {
-                          ...selectedNode.input!,
-                          type: e.target.value as "text" | "number",
-                        })
-                      }
-                      className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white text-sm"
-                    >
-                      <option value="text">text</option>
-                      <option value="number">number</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Validation (regex)</label>
-                    <input
-                      type="text"
-                      value={selectedNode.input.validation || ""}
-                      onChange={(e) =>
-                        updateNodeNested(selectedNodeId, "input", {
-                          ...selectedNode.input!,
-                          validation: e.target.value,
-                        })
-                      }
-                      className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white text-sm"
-                      placeholder="^\\d{6,}$"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1">Retry Limit</label>
-                    <input
-                      type="number"
-                      value={selectedNode.input.retryLimit ?? 0}
-                      onChange={(e) =>
-                        updateNodeNested(selectedNodeId, "input", {
-                          ...selectedNode.input!,
-                          retryLimit: Number(e.target.value),
-                        })
-                      }
-                      className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white text-sm"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Executor */}
             <div className="mb-6 p-4 bg-stone-800/50 rounded-lg border border-stone-700 space-y-3">
               <label className="block text-sm font-medium">Executor</label>
               <div className="grid grid-cols-3 gap-2">
-                {(["none", "api", "llm"] as const).map((t) => (
+                {(["none", "api", "input"] as const).map((t) => (
                   <button
                     key={t}
                     onClick={() => setExecutorType(selectedNodeId, t)}
@@ -600,59 +520,134 @@ export default function ControlledBotBuilder() {
                   })()}
                   <div>
                     <label className="block text-xs font-medium mb-1">Method</label>
-                    <select
-                      value={
-                        selectedNode.executor?.type === "api"
-                          ? (selectedNode.executor.config as ApiExecutorConfig).method || "GET"
-                          : "GET"
-                      }
-                      onChange={(e) => {
-                        const apiConfig =
-                          selectedNode.executor?.type === "api"
-                            ? (selectedNode.executor.config as ApiExecutorConfig)
-                            : { endpoint: "", method: "GET" as const };
-                        updateNodeNested(selectedNodeId, "executor", {
-                          type: "api",
-                          config: {
-                            ...apiConfig,
-                            method: e.target.value as "GET" | "POST" | "PUT",
-                          },
-                        });
-                      }}
-                      className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white text-sm"
-                    >
-                      <option value="GET">GET</option>
-                      <option value="POST">POST</option>
-                      <option value="PUT">PUT</option>
-                    </select>
+                    <div className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-sm text-stone-300">
+                      GET
+                    </div>
+                    <p className="text-xs text-stone-500 mt-1">Bot can only retrieve data using GET requests</p>
                   </div>
                 </div>
               )}
 
-              {currentExecutorType === "llm" && (
-                <div className="mt-3">
-                  <label className="block text-xs font-medium mb-1">LLM Prompt</label>
-                  <textarea
-                    value={
-                      selectedNode.executor?.type === "llm"
-                        ? ((selectedNode.executor.config as LlmExecutorConfig).prompt || "")
-                        : ""
-                    }
-                    onChange={(e) =>
-                      updateNodeNested(selectedNodeId, "executor", {
-                        type: "llm",
-                        config: { prompt: e.target.value },
-                      })
-                    }
-                    className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white text-sm h-20 resize-none"
-                    placeholder="Enter prompt for the LLM..."
-                  />
+              {currentExecutorType === "input" && (
+                <div className="grid grid-cols-1 gap-3 mt-3">
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Input Key</label>
+                    <input
+                      type="text"
+                      value={
+                        selectedNode.executor?.type === "input"
+                          ? (selectedNode.executor.config as InputExecutorConfig).key || ""
+                          : ""
+                      }
+                      onChange={(e) =>
+                        updateNodeNested(selectedNodeId, "executor", {
+                          type: "input",
+                          config: { 
+                            ...(selectedNode.executor?.type === "input" ? (selectedNode.executor.config as InputExecutorConfig) : { key: "", type: "text" }),
+                            key: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white text-sm"
+                      placeholder="e.g., userName, orderNumber"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Input Type</label>
+                    <select
+                      value={
+                        selectedNode.executor?.type === "input"
+                          ? (selectedNode.executor.config as InputExecutorConfig).type || "text"
+                          : "text"
+                      }
+                      onChange={(e) =>
+                        updateNodeNested(selectedNodeId, "executor", {
+                          type: "input",
+                          config: {
+                            ...(selectedNode.executor?.type === "input" ? (selectedNode.executor.config as InputExecutorConfig) : { key: "", type: "text" }),
+                            type: e.target.value as "text" | "number",
+                          },
+                        })
+                      }
+                      className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white text-sm"
+                    >
+                      <option value="text">text</option>
+                      <option value="number">number</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Validation (regex)</label>
+                    <input
+                      type="text"
+                      value={
+                        selectedNode.executor?.type === "input"
+                          ? (selectedNode.executor.config as InputExecutorConfig).validation || ""
+                          : ""
+                      }
+                      onChange={(e) =>
+                        updateNodeNested(selectedNodeId, "executor", {
+                          type: "input",
+                          config: {
+                            ...(selectedNode.executor?.type === "input" ? (selectedNode.executor.config as InputExecutorConfig) : { key: "", type: "text" }),
+                            validation: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white text-sm"
+                      placeholder="^\\d{6,}$"
+                    />
+                    <p className="text-xs text-stone-500 mt-1">e.g., for 6+ digits use: (6 or more)</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Retry Limit</label>
+                    <input
+                    min={0}
+                    max={10}
+                      type="number"
+                      value={
+                        selectedNode.executor?.type === "input"
+                          ? (selectedNode.executor.config as InputExecutorConfig).retryLimit ?? 0
+                          : 0
+                      }
+                      onChange={(e) =>
+                        updateNodeNested(selectedNodeId, "executor", {
+                          type: "input",
+                          config: {
+                            ...(selectedNode.executor?.type === "input" ? (selectedNode.executor.config as InputExecutorConfig) : { key: "", type: "text" }),
+                            retryLimit: Number(e.target.value),
+                          },
+                        })
+                      }
+                      className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Input Executor - Link to Node */}
+              {currentExecutorType === "input" && (
+                <div className="pt-3 border-t border-stone-600 mt-3">
+                  <label className="block text-sm font-medium mb-3 text-pink-400">After User Input, Route To</label>
+                  <select
+                    value={selectedNode.inputNextNodeId || ""}
+                    onChange={(e) => updateNode(selectedNodeId, "inputNextNodeId", e.target.value)}
+                    className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white text-sm"
+                  >
+                    <option value="">-- Select target node --</option>
+                    {bot.nodes.map((node) => (
+                      <option key={node.id} value={node.id}>
+                        {node.title}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-stone-500 mt-2">Select which node to navigate to after user provides input</p>
                 </div>
               )}
             </div>
 
-            {/* Output */}
-            <div className="mb-6 p-4 bg-stone-800/50 rounded-lg border border-stone-700 space-y-3">
+            {/* Output - Hidden when executor is input */}
+            {currentExecutorType !== "input" && (
+              <div className="mb-6 p-4 bg-stone-800/50 rounded-lg border border-stone-700 space-y-3">
               <label className="block text-sm font-medium">Output</label>
               <select
                 value={selectedNode.output.type}
@@ -669,11 +664,29 @@ export default function ControlledBotBuilder() {
                 <option value="end">end</option>
               </select>
               
+              {/* Custom Text Input - Show when output type is text */}
+              {selectedNode.output.type === "text" && (
+                <div className="mt-4">
+                  <label className="block text-xs font-medium mb-2 text-pink-400">Custom Text to Display</label>
+                  <textarea
+                    value={selectedNode.output.customText || ""}
+                    onChange={(e) =>
+                      updateNodeNested(selectedNodeId, "output", {
+                        ...selectedNode.output,
+                        customText: e.target.value,
+                      })
+                    }
+                    className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white text-sm h-24 resize-none"
+                    placeholder="Enter the text to show to the user..."
+                  />
+                  <p className="text-xs text-stone-500 mt-2">This text will be displayed to the user when they reach this node</p>
+                </div>
+              )}
 
               {/* Options editor enable only if output type is options */}
               {selectedNode.output.type === "options" && (
                 <div className="mt-4">
-                  {/* API Executor - Show Test Button and Action Options */}
+                  {/* API Executor - Test and Bind Dynamic Options */}
                   {currentExecutorType === "api" && (
                     <div className="p-4 bg-stone-800/50 rounded-lg border border-stone-700 space-y-3">
                       <Button
@@ -694,63 +707,97 @@ export default function ControlledBotBuilder() {
                       {/* Test Success */}
                       {testData && testData.length > 0 && (
                         <div className="p-3 bg-green-900/30 border border-green-700 rounded-lg">
-                          <p className="text-xs text-green-300 font-medium">✓ API is working correctly and will return {selectedNode.output.type} at runtime of bot.</p>
+                          <p className="text-xs text-green-300 font-medium">✓ API is working correctly and will return options at runtime of bot.</p>
                         </div>
                       )}
 
-                      {/* Add Action Options */}
+                      {/* Target Node for Dynamic Options */}
                       <div className="pt-3 border-t border-stone-600">
-                        <label className="block text-sm font-medium mb-3">Add Special Actions</label>
-                        <div className="space-y-2">
-                          <Button
-                            onClick={() => addActionOption("back")}
-                            disabled={selectedNode.options.some((o) => o.actionType === "back")}
-                            size="sm"
-                            className="w-full bg-stone-700 hover:bg-stone-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            + Add &quot;Go Back&quot;
-                          </Button>
-                          <Button
-                            onClick={() => addActionOption("end")}
-                            disabled={selectedNode.options.some((o) => o.actionType === "end")}
-                            size="sm"
-                            className="w-full bg-stone-700 hover:bg-stone-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            + Add &quot;End Conversation&quot;
-                          </Button>
-                        </div>
+                        <label className="block text-sm font-medium mb-3">Route Dynamic Options To</label>
+                        <select
+                          value={selectedNode.apiResponseMapping?.nextNodeId || ""}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              updateNode(selectedNodeId, "apiResponseMapping", {
+                                dataField: selectedNode.apiResponseMapping?.dataField || "data",
+                                labelField: selectedNode.apiResponseMapping?.labelField || "label",
+                                valueField: selectedNode.apiResponseMapping?.valueField || "value",
+                                nextNodeId: e.target.value,
+                              });
+                            } else {
+                              updateNode(selectedNodeId, "apiResponseMapping", undefined);
+                            }
+                          }}
+                          className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white text-sm"
+                        >
+                          <option value="">-- Select target node --</option>
+                          {bot.nodes.map((node) => (
+                            <option key={node.id} value={node.id}>
+                              {node.title}
+                            </option>
+                          ))}
+                        </select>
                       </div>
 
-                      {/* Action Options Summary */}
-                      {selectedNode.options.length > 0 && (
-                        <div className="mt-4">
-                          <label className="block text-sm font-medium mb-2">Added Options ({selectedNode.options.length})</label>
-                          <div className="space-y-2">
-                            {selectedNode.options.map((option) => (
-                              <div
-                                key={option.id}
-                                className="p-3 bg-stone-800 border border-green-700 rounded-lg flex items-start justify-between"
-                              >
-                                <div className="flex-1">
-                                  <div className="font-medium text-sm text-white">{option.label}</div>
-                                  <div className="text-xs text-stone-400">{option.actionType === "back" ? "Goes back" : "Ends conversation"}</div>
-                                </div>
-                                <button
-                                  onClick={() => deleteOption(selectedNodeId, option.id)}
-                                  className="text-red-400 hover:text-red-300 text-xs"
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            ))}
+                      {/* API Response Mapping Configuration */}
+                      {selectedNode.apiResponseMapping && (
+                        <div className="mt-4 p-3 bg-stone-800 border border-stone-700 rounded-lg space-y-3">
+                          <label className="block text-sm font-medium text-pink-400">API Response Mapping</label>
+                          <div>
+                            <label className="block text-xs font-medium mb-1">Data Field Path</label>
+                            <input
+                              type="text"
+                              value={selectedNode.apiResponseMapping.dataField}
+                              onChange={(e) =>
+                                updateNode(selectedNodeId, "apiResponseMapping", {
+                                  ...selectedNode.apiResponseMapping!,
+                                  dataField: e.target.value,
+                                })
+                              }
+                              className="w-full bg-stone-700 border border-stone-600 rounded-lg px-3 py-2 text-white text-sm"
+                              placeholder="data.items"
+                            />
+                            <p className="text-xs text-stone-500 mt-1">e.g., &quot;data&quot;, &quot;data.items&quot;</p>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium mb-1">Label Field</label>
+                            <input
+                              type="text"
+                              value={selectedNode.apiResponseMapping.labelField}
+                              onChange={(e) =>
+                                updateNode(selectedNodeId, "apiResponseMapping", {
+                                  ...selectedNode.apiResponseMapping!,
+                                  labelField: e.target.value,
+                                })
+                              }
+                              className="w-full bg-stone-700 border border-stone-600 rounded-lg px-3 py-2 text-white text-sm"
+                              placeholder="name"
+                            />
+                            <p className="text-xs text-stone-500 mt-1">Field to display as option label</p>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium mb-1">Value Field</label>
+                            <input
+                              type="text"
+                              value={selectedNode.apiResponseMapping.valueField}
+                              onChange={(e) =>
+                                updateNode(selectedNodeId, "apiResponseMapping", {
+                                  ...selectedNode.apiResponseMapping!,
+                                  valueField: e.target.value,
+                                })
+                              }
+                              className="w-full bg-stone-700 border border-stone-600 rounded-lg px-3 py-2 text-white text-sm"
+                              placeholder="id"
+                            />
+                            <p className="text-xs text-stone-500 mt-1">Field to use for routing</p>
                           </div>
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* Non-API Executor - Show Standard Options */}
-                  {currentExecutorType !== "api" && (
+                  {/* None Executor - Show Standard Options */}
+                  {currentExecutorType === "none" && (
                     <>
                       <div className="flex items-center justify-between mb-4">
                         <label className="block text-sm font-medium">Options ({selectedNode.options.length}/5)</label>
@@ -790,9 +837,12 @@ export default function ControlledBotBuilder() {
                       )}
                     </>
                   )}
+
+                  {/* Input Executor - No Options Needed (routes directly via inputNextNodeId) */}
                 </div>
               )}
             </div>
+            )}
 
             <Button
               onClick={() => {
