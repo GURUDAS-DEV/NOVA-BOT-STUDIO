@@ -1,12 +1,12 @@
 # Nova Bot Studio  
 
-![Next.js](https://img.shields.io/badge/Next.js-16.0.7-000000?logo=nextdotjs) ![React](https://img.shields.io/badge/React-19.2.0-61DAFB?logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6?logo=typescript) ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.0-38B2AC?logo=tailwindcss) ![License](https://img.shields.io/badge/License-MIT-green) ![GitHub last commit](https://img.shields.io/github/last-commit/GURUDAS-DEV/NOVA-BOT-STUDIO) ![CI](https://github.com/GURUDAS-DEV/NOVA-BOT-STUDIO/actions/workflows/ci.yml/badge.svg)  
+![Next.js](https://img.shields.io/badge/Next.js-16.0.7-000000?logo=nextdotjs) ![React](https://img.shields.io/badge/React-19.2.0-61DAFB?logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6?logo=typescript) ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.0-38B2AC?logo=tailwindcss) ![Docker](https://img.shields.io/badge/Docker-✓-2496ED?logo=docker) ![License](https://img.shields.io/badge/License-MIT-green) ![GitHub last commit](https://img.shields.io/github/last-commit/GURUDAS-DEV/NOVA-BOT-STUDIO) ![CI](https://github.com/GURUDAS-DEV/NOVA-BOT-STUDIO/actions/workflows/ci.yml/badge.svg)  
 
 **The ultimate AI‑powered bot platform for automation – design, integrate and manage bots without writing code.**  
 
 [Demo](#) • [Documentation](#) • [Issues](https://github.com/GURUDAS-DEV/NOVA-BOT-STUDIO/issues) • [Pull Requests](https://github.com/GURUDAS-DEV/NOVA-BOT-STUDIO/pulls)
 
----
+---  
 
 ## Overview  
 
@@ -22,7 +22,7 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 
 **Current version:** `v0.2.1` (development)
 
----
+---  
 
 ## Features  
 
@@ -45,7 +45,7 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 | **Analytics** | Built‑in usage analytics visualised in the dashboard | ✅ Stable |
 | **Internationalisation** | Basic i18n support for UI strings | 🟡 Beta |
 
----
+---  
 
 ## Tech Stack  
 
@@ -64,7 +64,7 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 | **Testing / Linting** | `eslint`, `eslint-config-next`, `prettier` | Code quality enforcement |
 | **Build & Deploy** | `next build`, Vercel, Docker | Optimized production bundles & containerisation |
 
----
+---  
 
 ## Architecture  
 
@@ -101,7 +101,7 @@ src/
 * **Environment** – `NEXT_PUBLIC_API_BASE_URL` points to the backend API (e.g., `https://api.nova-bot.studio`).  
 * **Config Editor** – The `Edit‑Bot‑Config/Website/FreeStyle/(id)/page.tsx` component renders a rich editor that lets users modify HTML/CSS/JS snippets for a specific bot (`id`). Changes are persisted via the backend PATCH endpoint `/api/bots/:id`.
 
----
+---  
 
 ## Getting Started  
 
@@ -110,7 +110,7 @@ src/
 | Tool | Minimum version |
 |------|-----------------|
 | **Node.js** | 20.x |
-| **npm** | 10.x (or `pnpm` / `yarn` – same commands) |
+| **npm** | 10.x (or `pnpm` / `yarn`) |
 | **Git** | any recent version |
 | **Vercel CLI** (optional) | 32.x for local preview |
 | **Docker** (optional) | 24.x for containerised dev |
@@ -153,7 +153,7 @@ npm run dev
 
 Open <http://localhost:3000>. You should see the public landing page. After logging in (or using the mock auth flow), you’ll be redirected to the dashboard.
 
----
+---  
 
 ## Usage  
 
@@ -164,7 +164,7 @@ Open <http://localhost:3000>. You should see the public landing page. After logg
 | `npm run dev` | Starts the Next.js dev server (`http://localhost:3000`) with hot‑reloading. |
 | `npm run build` | Generates an optimized production build in `.next`. |
 | `npm start` | Serves the production build locally (`NODE_ENV=production`). |
-| `npm run lint` | Lints the codebase using ESLint (Next.js config). |
+| `npm run lint` | Lints the codebase using ESLint (Next.js preset). |
 | `npm run test` | Placeholder – add Jest/Playwright tests here. |
 | `npm run format` | Runs Prettier to format all files. |
 
@@ -291,25 +291,20 @@ Navigate to `/home/Edit-Bot-Config/Website/FreeStyle/[id]` after selecting a bot
 |---|---|
 | ![Landing](public/LandingPageImage1.png) | ![Dashboard](public/LandingPageImage2.png) |
 
-*(Images are stored in `public/` and render automatically when the app runs.)*
-
----
+---  
 
 ## Development  
 
 ### Setting up the development environment  
 
 ```bash
-# Install dependencies (already done in Getting Started)
-npm ci
-
-# Run the dev server
-npm run dev
+npm ci          # install exact dependencies
+npm run dev      # start the dev server
 ```
 
 ### Testing  
 
-> **Note:** The repository currently contains placeholder scripts. Add your preferred testing framework (e.g., Jest, Playwright) and update `package.json` accordingly.
+> The repository currently contains placeholder scripts. Add your preferred testing framework (e.g., Jest, Playwright) and update `package.json` accordingly.
 
 ```bash
 npm run test
@@ -319,22 +314,22 @@ npm run test
 
 * **Linting** – `npm run lint` uses ESLint with the Next.js preset.  
 * **Formatting** – `npm run format` runs Prettier.  
-* **Commit messages** – Follow the Conventional Commits specification for easier changelog generation.
+* **Commit messages** – Follow the **Conventional Commits** specification for easier changelog generation.
 
 ### Debugging tips  
 
-* Use the browser’s DevTools to inspect network requests to `NEXT_PUBLIC_API_BASE_URL`.  
-* The `useAuthStore` and `useBotStore` hooks expose their state via the React DevTools extension.  
+* Inspect network requests to `NEXT_PUBLIC_API_BASE_URL` via the browser’s DevTools.  
+* The `useAuthStore` and `useBotStore` hooks expose their state in React DevTools.  
 * Enable verbose logging in `src/lib/utils.ts` by setting `NEXT_PUBLIC_DEBUG=true` in `.env.local`.
 
----
+---  
 
 ## Deployment  
 
 ### Vercel (recommended)
 
 1. Sign in to [Vercel](https://vercel.com) and import the repository.  
-2. Set the following environment variables in the Vercel dashboard:  
+2. Add the following environment variables in the Vercel dashboard:  
 
    | Name | Value |
    |------|-------|
@@ -344,7 +339,7 @@ npm run test
 
 3. Deploy – Vercel will automatically run `npm ci && npm run build` and serve the app on a generated URL.
 
-### Docker
+### Docker  
 
 ```bash
 # Build the image
@@ -367,10 +362,15 @@ npm run build
 npm start   # runs `next start` on port 3000 by default
 ```
 
-Make sure the environment variables are present in `.env.production` or exported in the shell.
+Ensure the required environment variables are present in `.env.production` or exported in the shell.
 
----
+---  
 
 ## API Documentation  
 
-> The backend API is **not** part of this repository. Below is a quick reference for the endpoints the frontend expects. Adjust the base URL via `
+> The backend API is **not** part of this repository. Below is a quick reference for the endpoints the frontend expects. Adjust the base URL via `NEXT_PUBLIC_API_BASE_URL`.
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| `POST` | `/api/auth/login` | Authenticate a user and set an HttpOnly session cookie. | ❌ |
+| `POST` | `/api/auth/logout` | Invalidate the session cookie. | ✅
