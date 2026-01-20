@@ -1,12 +1,10 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle2, Crown, Sparkles, Mail, ChevronDown } from "lucide-react";
+import { ArrowRight, CheckCircle2, Crown, Sparkles, Mail } from "lucide-react";
 import Image from "next/image";
 import { AiFillInstagram } from "react-icons/ai";
 import { FaDiscord, FaFacebook, FaTelegram, FaWhatsapp } from "react-icons/fa";
 import { TbWorldCode } from "react-icons/tb";
-import { useState } from "react";;
+import { FAQItem } from "@/components/FAQItemClient";
 
 export default function Home() {
   
@@ -535,37 +533,6 @@ function TestimonialCard({
           </span>
         ))}
       </div>
-    </div>
-  );
-}
-
-function FAQItem({ question, answer }: { question: string; answer: string }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div
-      className="rounded-2xl cursor-pointer font-outfit border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
-    >
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-5 flex items-center justify-between bg-white dark:bg-gray-900 hover:bg-gray-50 cursor-pointer dark:hover:bg-gray-800 transition-colors"
-      >
-        <h3 className="text-lg font-semibold text-black dark:text-white text-left">
-          {question}
-        </h3>
-        <ChevronDown
-          className={`h-5 w-5 text-gray-600 dark:text-gray-400 shrink-0 transition-transform duration-300 ${isOpen ? "transform rotate-180" : ""
-            }`}
-        />
-      </button>
-
-      {isOpen && (
-        <div className="px-6 py-5 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-black/50 animate-in fade-in slide-in-from-top-2 duration-300">
-          <p className="text-gray-700 text-left dark:text-gray-300 font-inter leading-relaxed">
-            {answer}
-          </p>
-        </div>
-      )}
     </div>
   );
 }
