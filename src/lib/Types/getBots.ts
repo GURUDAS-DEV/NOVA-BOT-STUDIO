@@ -10,7 +10,7 @@ export interface botInterface{
 export interface bot{
     _id: string;
     userId: string;
-    botName: string;
+    name: string;
     platform: "Telegram" | "Discord" | "API" | "Instagram" | "WhatsApp";
     status: "active" | "paused" | "draft" | "deleted" | "inactive";
     style ?: string;

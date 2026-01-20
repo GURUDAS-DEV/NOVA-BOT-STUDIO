@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, Space_Grotesk, Poppins, Inter } from "next/font/google";
 import "./globals.css";
-import { Provider } from "./provider";
+import { Providers } from "./provider";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -45,7 +45,7 @@ export default function RootLayout({
       <body
         className={`${outfit.variable} ${space.variable} ${poppins.variable} ${inter.variable} antialiased`}
       >
-        <Provider>{children}</Provider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

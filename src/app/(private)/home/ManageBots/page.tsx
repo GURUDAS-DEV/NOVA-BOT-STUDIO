@@ -111,8 +111,9 @@ const ManageBotsPage = () => {
         }
       );
       const data = await response.json();
+      console.log("Fetched bots data:", data);  
       if (response.ok) {
-        setBots(data.bots);
+        setBots(data.items);
         setCursor(data.cursor);
         setHasMore(data.hasMore);
         setHasMore(false);
@@ -450,7 +451,7 @@ const ManageBotsPage = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-outfit truncate">
-                      {bot.botName}
+                      {bot.name}
                     </h3>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className="text-sm text-gray-600 dark:text-gray-400 font-inter">
@@ -463,7 +464,7 @@ const ManageBotsPage = () => {
                       )}
                       <span className="text-gray-400">•</span>
                       <span className="text-sm text-gray-600 dark:text-gray-400 font-inter">
-                        {botTypeLabels[bot?.purpose]}
+                        {bot.style}
                       </span>
                     </div>
                   </div>
@@ -499,7 +500,7 @@ const ManageBotsPage = () => {
                     Last Updated
                   </p>
                   <p className="text-sm text-gray-900 dark:text-white font-inter">
-                    {bot.updated_at.toLocaleString().slice(0, 10)}
+                    {bot?.updated_at?.toLocaleString()?.slice(0, 10)}
                   </p>
                 </div>
               </div>

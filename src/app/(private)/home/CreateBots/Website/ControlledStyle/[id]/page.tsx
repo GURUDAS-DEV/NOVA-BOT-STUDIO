@@ -103,6 +103,32 @@ export default function ControlledBotBuilder() {
   const selectedNode = bot.nodes.find((n) => n.id === selectedNodeId);
   const selectedOption = selectedNode?.options.find((o) => o.id === selectedOptionId);
 
+
+  const createControlledStyleBot = async () => {
+    try{
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/createControlledBot`, {
+        method : "POST",
+        headers : {
+          "Content-Type": "application/json "
+        },
+        body: JSON.stringify({ bot }),
+        credentials : 'include',
+      })
+
+      const data = await response.json();
+      if(!response.ok){
+        toast.error("Failed to create controlled style bot");
+        console.log("Failed response:", data);
+      }else{
+        toast.success("Controlled style bot created successfully!");
+        console.log("Bot created:", data);
+      }
+    }
+    catch(e){
+      console.error("Error creating controlled style bot:", e);
+    }
+  }
+
   // Preview mode helpers: options only route to next node
   // Preview helpers removed in this editor-only view
 
@@ -857,12 +883,16 @@ export default function ControlledBotBuilder() {
             </Button>
           </div>
         ) : null}
-        <button
-          className="h-7 w-40 bg-white text-black mt-4"
-          onClick={() => console.log("Bot : ", bot)}
-        >
-          Click
-        </button>
+        
+        {/* Create Bot Button */}
+        <div className="mt-auto pt-6 border-t border-stone-700">
+          <Button
+            onClick={createControlledStyleBot}
+            className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-semibold py-3"
+          >
+            Create Controlled Style Bot
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -224,7 +224,7 @@ const HomePage = () => {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900 dark:text-white font-outfit">
-                      {bot.botName}
+                      {bot.name}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 font-inter">
                       {bot.platform} • Created on {new Date(bot.created_at).toLocaleDateString()}
