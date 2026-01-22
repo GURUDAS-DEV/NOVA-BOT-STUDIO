@@ -260,4 +260,111 @@ export default function EditFreeStylePage() {
         className="w-full h-40 p-2 border rounded"
         placeholder="CSS"
         value={config.css}
-        onChange={(e) => setConfig({ ...config, css: e.target
+        onChange={(e) => setConfig({ ...config, css: e.target.value })}
+      />
+      <textarea
+        className="w-full h-40 p-2 border rounded"
+        placeholder="JS"
+        value={config.js}
+        onChange={(e) => setConfig({ ...config, js: e.target.value })}
+      />
+
+      <Button onClick={handleSave} disabled={saving}>
+        {saving ? "Saving…" : "Save Changes"}
+      </Button>
+    </div>
+  );
+}
+```
+
+---  
+
+## API Documentation  
+
+All API calls are made to the URL defined in `NEXT_PUBLIC_API_BASE_URL`. The backend expects **session cookies** for authentication (the frontend sends `credentials: "include"`).
+
+### 1️⃣ Get API keys for all bots (Website platform)
+
+**Endpoint**
+
+```
+GET /api/APIKeyManagement/GetApiKeyForAllBots
+```
+
+**Description**  
+Returns a list of bots (including website bots) with their current API keys and status.
+
+**Request Headers**
+
+| Header | Value |
+|--------|-------|
+| `Content-Type` | `application/json` |
+| `Cookie` | Session cookie (automatically sent when `credentials: "include"` is used) |
+
+**Response (200)**
+
+```json
+{
+  "bots": [
+    {
+      "_id": "64f1a2b3c4d5e6f7a8b9c0d1",
+      "userId": "user_123",
+      "name": "Support Bot",
+      "botDescription": "Handles FAQ",
+      "platform": "Website",
+      "status": "active",
+      "createdAt": "2024-09-01T12:34:56.789Z",
+      "lastUsed": "2024-09-10T08:15:30.123Z",
+      "requestCount": 1245
+    }
+    // …more bots
+  ]
+}
+```
+
+**Error Responses**
+
+| Code | Reason |
+|------|--------|
+| 401 | Not authenticated |
+| 500 | Server error while fetching bots |
+
+---
+
+### 2️⃣ Generate a new API key for a specific website bot
+
+**Endpoint**
+
+```
+POST /api/APIKeyManagement/GenerateNewApiKeyForWebsite
+```
+
+**Description**  
+Creates a fresh API key for the given website bot. The old key becomes invalid.
+
+**Request Body**
+
+```json
+{
+  "botId": "64f1a2b3c4d5e6f7a8b9c0d1"
+}
+```
+
+**Request Headers**
+
+| Header | Value |
+|--------|-------|
+| `Content-Type` | `application/json` |
+| `Cookie` | Session cookie (automatically sent when `credentials: "include"` is used) |
+
+**Response (200)**
+
+```json
+{
+  "apiKey": "newly-generated-api-key-1234567890abcdef"
+}
+```
+
+**Error Responses**
+
+| Code | Reason |
