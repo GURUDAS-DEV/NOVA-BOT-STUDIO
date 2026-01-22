@@ -20,11 +20,11 @@ import DailogApiBox from "../../ManageBots/dailog/DailogApiBox";
 interface WebsiteBot {
   _id: string;
   userId : string;
-  botName: string;
+  name: string;
   botDescription: string;
   platform: "Website";
   status : "active" | "inactive" | "paused";
-  created_at: string;
+  createdAt: string;
   lastUsed: string | null;
   requestCount: number;
 }
@@ -47,7 +47,7 @@ const WebsiteAPIKeysPage = () => {
 
   const getBots = async()=>{
     try{
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/APIKeyManagement/GetApiKeyForWebsite`,{
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/APIKeyManagement/GetApiKeyForAllBots`,{
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -257,7 +257,7 @@ const WebsiteAPIKeysPage = () => {
                     </div> 
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-outfit truncate">
-                        {bot.botName}
+                        {bot.name}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
@@ -276,7 +276,7 @@ const WebsiteAPIKeysPage = () => {
                       Created
                     </p>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white font-outfit">
-                      {new Date(bot.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {new Date(bot.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
                   </div>
                   <div>
@@ -341,7 +341,7 @@ const WebsiteAPIKeysPage = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-outfit truncate">
-                          {bot.botName}
+                          {bot.name}
                         </h3>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-yellow-600 dark:text-yellow-500">
