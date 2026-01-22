@@ -14,7 +14,11 @@ interface BotOption {
 }
 
 // Node-centric FSM schema
-type ApiExecutorConfig = { endpoint: string; method: "GET" };
+type ApiExecutorConfig = { 
+  endpoint: string; 
+  method: "GET";
+  params?: { key: string; value: string }[];
+};
 type InputExecutorConfig = {
   key: string;
   type: "text" | "number";
@@ -523,6 +527,7 @@ export default function ControlledBotBuilder() {
                         ? (selectedNode.executor.config as ApiExecutorConfig)
                         : undefined;
                     return (
+                  <>
                   <div>
                     <label className="block text-xs font-medium mb-1">Endpoint</label>
                     <input
@@ -542,8 +547,6 @@ export default function ControlledBotBuilder() {
                       placeholder="https://api.example.com/endpoint"
                     />
                   </div>
-                    );
-                  })()}
                   <div>
                     <label className="block text-xs font-medium mb-1">Method</label>
                     <div className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-sm text-stone-300">
@@ -551,6 +554,120 @@ export default function ControlledBotBuilder() {
                     </div>
                     <p className="text-xs text-stone-500 mt-1">Bot can only retrieve data using GET requests</p>
                   </div>
+                  
+                  {/* Query Parameters Toggle */}
+                  <div className="pt-3 border-t border-stone-600">
+                    <label className="flex items-center gap-2 text-xs cursor-pointer mb-3">
+                      <input
+                        type="checkbox"
+                        checked={(apiConfig?.params?.length || 0) > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            updateNodeNested(selectedNodeId, "executor", {
+                              type: "api",
+                              config: {
+                                ...(apiConfig || { endpoint: "", method: "GET" }),
+                                params: [{ key: "", value: "" }],
+                              },
+                            });
+                          } else {
+                            updateNodeNested(selectedNodeId, "executor", {
+                              type: "api",
+                              config: {
+                                ...(apiConfig || { endpoint: "", method: "GET" }),
+                                params: undefined,
+                              },
+                            });
+                          }
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span className="font-medium">Has Query Parameters?</span>
+                    </label>
+                    
+                    {/* Query Parameters Input Fields */}
+                    {apiConfig?.params && apiConfig.params.length > 0 && (
+                      <div className="space-y-2">
+                        {apiConfig.params.map((param, index) => (
+                          <div key={index} className="flex gap-2 items-start">
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                value={param.key}
+                                onChange={(e) => {
+                                  const newParams = [...(apiConfig.params || [])];
+                                  newParams[index] = { ...newParams[index], key: e.target.value };
+                                  updateNodeNested(selectedNodeId, "executor", {
+                                    type: "api",
+                                    config: {
+                                      ...apiConfig,
+                                      params: newParams,
+                                    },
+                                  });
+                                }}
+                                className="w-full bg-stone-700 border border-stone-600 rounded-lg px-3 py-2 text-white text-xs"
+                                placeholder="Key (e.g., userId)"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                value={param.value}
+                                onChange={(e) => {
+                                  const newParams = [...(apiConfig.params || [])];
+                                  newParams[index] = { ...newParams[index], value: e.target.value };
+                                  updateNodeNested(selectedNodeId, "executor", {
+                                    type: "api",
+                                    config: {
+                                      ...apiConfig,
+                                      params: newParams,
+                                    },
+                                  });
+                                }}
+                                className="w-full bg-stone-700 border border-stone-600 rounded-lg px-3 py-2 text-white text-xs"
+                                placeholder="Value (e.g., 123)"
+                              />
+                            </div>
+                            <button
+                              onClick={() => {
+                                const newParams = apiConfig.params?.filter((_, i) => i !== index) || [];
+                                updateNodeNested(selectedNodeId, "executor", {
+                                  type: "api",
+                                  config: {
+                                    ...apiConfig,
+                                    params: newParams.length > 0 ? newParams : undefined,
+                                  },
+                                });
+                              }}
+                              className="p-2 bg-red-600/20 hover:bg-red-600/30 border border-red-600 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-3 h-3 text-red-400" />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => {
+                            const newParams = [...(apiConfig.params || []), { key: "", value: "" }];
+                            updateNodeNested(selectedNodeId, "executor", {
+                              type: "api",
+                              config: {
+                                ...apiConfig,
+                                params: newParams,
+                              },
+                            });
+                          }}
+                          className="w-full p-2 bg-stone-700 hover:bg-stone-600 border border-stone-600 rounded-lg text-xs text-white transition-colors flex items-center justify-center gap-1"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Add Parameter
+                        </button>
+                        <p className="text-xs text-stone-500 mt-2">Query params will be appended to the URL (e.g., ?userId=123&type=order)</p>
+                      </div>
+                    )}
+                  </div>
+                  </>
+                    );
+                  })()}
                 </div>
               )}
 
