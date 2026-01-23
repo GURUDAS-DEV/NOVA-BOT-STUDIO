@@ -368,3 +368,45 @@ Creates a fresh API key for the given website bot. The old key becomes invalid.
 **Error Responses**
 
 | Code | Reason |
+|------|--------|
+| 400 | Missing or invalid `botId` |
+| 401 | Not authenticated |
+| 500 | Server error while generating the key |
+
+---  
+
+## Development  
+
+### Setting up the development environment  
+
+1. Follow the **Getting Started** steps above.  
+2. Run `npm run lint` to ensure code quality.  
+3. (Optional) Install VS Code extensions: **ESLint**, **Prettier**, **Tailwind CSS IntelliSense**, **React**.  
+
+### Running tests  
+
+```bash
+npm run test
+```
+
+> *The repository currently contains placeholder scripts – add Jest, React Testing Library, or Playwright tests as the project grows.*
+
+### Code style  
+
+* **Prettier** is configured for consistent formatting (`npm run format`).  
+* **ESLint** uses the `eslint-config-next` preset; no lint errors should appear before committing.  
+
+### Debugging tips  
+
+* Use the browser devtools to inspect network requests to `NEXT_PUBLIC_API_BASE_URL`.  
+* The `useAuthStore` and `useBotStore` hooks expose useful state via the React DevTools extension.  
+
+---  
+
+## Deployment  
+
+### Vercel (one‑click)  
+
+1. Fork the repository on GitHub.  
+2. In Vercel, click **Import Project → Continue** and select your fork.  
+3. Set the required environment variables (`NEXT
