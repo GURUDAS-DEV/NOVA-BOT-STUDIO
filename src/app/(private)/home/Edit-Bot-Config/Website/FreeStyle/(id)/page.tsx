@@ -52,6 +52,24 @@ interface FormData {
   apiUsageRules: string;
 }
 
+interface configPayloadInterface {
+  botType: string;
+  websiteType: string;
+  tone: string;
+  verbosity: string;
+  behaviorDescription: string;
+  OwnerInformation: string;
+  additionalInformation: string;
+  examples: QAPair[];
+  apiEndpoint?: string;
+  responseFormat?: string;
+  apiUsageRules?: string;
+}
+
+interface parsedDataInterface {
+  result?: boolean;
+  reason?: string;
+}
 const EditBotPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -192,7 +210,7 @@ const EditBotPage = () => {
       setSaving(true);
 
       // Build the config object with proper mapping to backend schema
-      const configPayload: any = {
+      const configPayload: configPayloadInterface = {
         botType: formData.botType,
         websiteType: formData.websiteContext,
         tone: formData.tone,
@@ -327,7 +345,7 @@ const EditBotPage = () => {
           }
         );
         const raw = await response.json().catch(() => ({}));
-        let parsed = {};
+        let parsed : parsedDataInterface = {};
         if (raw && typeof raw.validationResult !== "undefined") {
           if (typeof raw.validationResult === "string") {
             try {

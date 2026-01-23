@@ -142,7 +142,7 @@ const RecentlyDeletedPage = () => {
   // Get selected bot name
   const getSelectedBotName = (): string => {
     const bot = deletedBots.find((b) => b._id === selectedBotId);
-    return bot?.botName || "Bot";
+    return bot?.name || "Bot";
   };
 
   useEffect(() => {
@@ -306,7 +306,7 @@ const RecentlyDeletedPage = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white font-outfit">
-                      {bot.botName}
+                      {bot.name}
                     </h3>
                     <p className="text-xs text-gray-600 dark:text-gray-400 font-inter">
                       {bot.platform}
