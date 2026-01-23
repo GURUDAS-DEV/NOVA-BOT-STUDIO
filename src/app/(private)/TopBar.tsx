@@ -101,10 +101,10 @@ const TopBar = () => {
             {userMenuOpen && (
               <div className="absolute right-0 mt-3 w-64 rounded-2xl border border-gray-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
                 {/* User Info Header */}
-                <div className="p-4 bg-gradient-to-br from-pink-50 to-white dark:from-stone-800 dark:to-stone-900 border-b border-gray-200 dark:border-stone-800">
+                <div className="p-4 bg-linear-to-br from-pink-50 to-white dark:from-stone-800 dark:to-stone-900 border-b border-gray-200 dark:border-stone-800">
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center text-white font-semibold text-sm shadow-lg">
+                      <div className="w-10 h-10 rounded-full bg-linear-to-br from-pink-500 to-pink-600 flex items-center justify-center text-white font-semibold text-sm shadow-lg">
                         {username?.charAt(0).toUpperCase() || "U"}
                       </div>
                       <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-stone-900" />

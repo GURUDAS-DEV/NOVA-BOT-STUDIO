@@ -148,7 +148,7 @@ const APIKeysPage = () => {
                 onClick={() => handleNavigate(platform.href)}
               >
                 {platform.isPaid && (
-                  <div className="absolute top-3 right-3 px-2.5 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full">
+                  <div className="absolute top-3 right-3 px-2.5 py-1 bg-linear-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full">
                     Premium
                   </div>
                 )}
@@ -187,7 +187,7 @@ const APIKeysPage = () => {
       </div>
 
       {/* Bottom Info Section */}
-      <Card className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border-gray-200 dark:border-gray-700">
+      <Card className="bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border-gray-200 dark:border-gray-700">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex-1">

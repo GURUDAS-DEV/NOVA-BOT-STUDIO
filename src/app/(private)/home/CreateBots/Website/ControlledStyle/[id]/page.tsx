@@ -109,11 +109,25 @@ export default function ControlledBotBuilder() {
 
 
   const createControlledStyleBot = async () => {
+          
     try{
+      // Check if apiResponseMapping with nextNodeId exists in any nodes
+      bot.nodes.forEach((node) => {
+        if (node.executor?.type === "api" && node.output.type === "options") {
+          console.log(`📍 Node "${node.title}" (ID: ${node.id}):`, {
+            hasExecutor: !!node.executor,
+            executorType: node.executor?.type,
+            outputType: node.output.type,
+            apiResponseMapping: node.apiResponseMapping,
+            apiResponseMappingNextNodeId: node.apiResponseMapping?.nextNodeId,
+          });
+        }
+      });
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/createControlledBot`, {
         method : "POST",
         headers : {
-          "Content-Type": "application/json "
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({ bot }),
         credentials : 'include',
@@ -394,50 +408,8 @@ export default function ControlledBotBuilder() {
                 type="text"
                 value={selectedOption.label}
                 onChange={(e) => updateOption(selectedNodeId, selectedOptionId!, "label", e.target.value)}
-                disabled={selectedOption.actionType === "back" || selectedOption.actionType === "end"}
-                className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white placeholder-stone-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white placeholder-stone-500"
               />
-            </div>
-
-            {/* Action Type - Back or End */}
-            <div className="mb-6 p-4 bg-stone-800/50 rounded-lg border border-stone-700 space-y-3">
-              <label className="block text-sm font-medium mb-3">Action Type</label>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-xs cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedOption.actionType === "back"}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        updateOption(selectedNodeId, selectedOptionId!, "actionType", "back");
-                        updateOption(selectedNodeId, selectedOptionId!, "label", "go back");
-                      } else if (selectedOption.actionType === "back") {
-                        updateOption(selectedNodeId, selectedOptionId!, "actionType", "normal");
-                        updateOption(selectedNodeId, selectedOptionId!, "label", "New Option");
-                      }
-                    }}
-                    className="w-4 h-4"
-                  />
-                  Mark as Back
-                </label>
-                <label className="flex items-center gap-2 text-xs cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedOption.actionType === "end"}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        updateOption(selectedNodeId, selectedOptionId!, "actionType", "end");
-                        updateOption(selectedNodeId, selectedOptionId!, "label", "End Conversation");
-                      } else if (selectedOption.actionType === "end") {
-                        updateOption(selectedNodeId, selectedOptionId!, "actionType", "normal");
-                        updateOption(selectedNodeId, selectedOptionId!, "label", "New Option");
-                      }
-                    }}
-                    className="w-4 h-4"
-                  />
-                  Mark as End
-                </label>
-              </div>
             </div>
 
             {/* Link to next node - Hidden for back/end actions */}
@@ -625,7 +597,7 @@ export default function ControlledBotBuilder() {
                                   });
                                 }}
                                 className="w-full bg-stone-700 border border-stone-600 rounded-lg px-3 py-2 text-white text-xs"
-                                placeholder="Value (e.g., 123)"
+                                placeholder="DataType (e.g., String, Number)"
                               />
                             </div>
                             <button
@@ -829,6 +801,9 @@ export default function ControlledBotBuilder() {
               {/* Options editor enable only if output type is options */}
               {selectedNode.output.type === "options" && (
                 <div className="mt-4">
+                  <div className="mb-4 p-3 bg-stone-800 border border-stone-700 rounded-lg text-xs text-stone-200">
+                    Back and End Chat options are attached automatically at runtime. No need to add them here.
+                  </div>
                   {/* API Executor - Test and Bind Dynamic Options */}
                   {currentExecutorType === "api" && (
                     <div className="p-4 bg-stone-800/50 rounded-lg border border-stone-700 space-y-3">
@@ -883,9 +858,9 @@ export default function ControlledBotBuilder() {
                       </div>
 
                       {/* API Response Mapping Configuration */}
-                      {selectedNode.apiResponseMapping && (
+                      {/* {selectedNode.apiResponseMapping && (
                         <div className="mt-4 p-3 bg-stone-800 border border-stone-700 rounded-lg space-y-3">
-                          <label className="block text-sm font-medium text-pink-400">API Response Mapping</label>
+                          <label className="block text-sm font-medium text-pink-400">API Response Mapping(Optional)</label>
                           <div>
                             <label className="block text-xs font-medium mb-1">Data Field Path</label>
                             <input
@@ -935,7 +910,7 @@ export default function ControlledBotBuilder() {
                             <p className="text-xs text-stone-500 mt-1">Field to use for routing</p>
                           </div>
                         </div>
-                      )}
+                      )} */}
                     </div>
                   )}
 
@@ -1005,7 +980,7 @@ export default function ControlledBotBuilder() {
         <div className="mt-auto pt-6 border-t border-stone-700">
           <Button
             onClick={createControlledStyleBot}
-            className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-semibold py-3"
+            className="w-full bg-linear-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-semibold py-3"
           >
             Create Controlled Style Bot
           </Button>

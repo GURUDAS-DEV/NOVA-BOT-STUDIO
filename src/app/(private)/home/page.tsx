@@ -22,7 +22,7 @@ import type { botInterface } from "@/lib/Types/getBots";
 import { Spinner } from "@/components/ui/spinner";
 
 const HomePage = () => {
-  const { username, userId } = useAuthStore();
+  const { username } = useAuthStore();
   const [noOfBot, setNoOfBot] = useState<number>(0);
   const [noOfActiveBot, setNoOfActiveBot] = useState<number>(0);
   const [recentBots, setRecentBots] = useState<botInterface["activeBots"]>([]);

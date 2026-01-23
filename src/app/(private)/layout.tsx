@@ -27,7 +27,7 @@ const homeLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="w-[100%]  bg-pink-50 dark:bg-stone-950">
+    <div className="w-full  bg-pink-50 dark:bg-stone-950">
       {/* Fixed Sidebar */}
       <Sidebar />
       {/* Content area offset by sidebar width and topbar height */}
