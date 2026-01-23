@@ -409,4 +409,12 @@ npm run test
 
 1. Fork the repository on GitHub.  
 2. In Vercel, click **Import Project → Continue** and select your fork.  
-3. Set the required environment variables (`NEXT
+3. Set the required environment variables (`NEXT_PUBLIC_API_BASE_URL`, `RESEND_API_KEY`, etc.) in the Vercel dashboard.  
+4. Click **Deploy** – Vercel will run `npm ci && npm run build` automatically.  
+
+### Docker  
+
+A Dockerfile is included for containerised deployments.
+
+```bash
+#
