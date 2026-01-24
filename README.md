@@ -329,7 +329,7 @@ Returns a list of bots (including website bots) with their current API keys and 
 | 401 | Not authenticated |
 | 500 | Server error while fetching bots |
 
----
+---  
 
 ### 2️⃣ Generate a new API key for a specific website bot
 
@@ -393,28 +393,4 @@ npm run test
 
 ### Code style  
 
-* **Prettier** is configured for consistent formatting (`npm run format`).  
-* **ESLint** uses the `eslint-config-next` preset; no lint errors should appear before committing.  
-
-### Debugging tips  
-
-* Use the browser devtools to inspect network requests to `NEXT_PUBLIC_API_BASE_URL`.  
-* The `useAuthStore` and `useBotStore` hooks expose useful state via the React DevTools extension.  
-
----  
-
-## Deployment  
-
-### Vercel (one‑click)  
-
-1. Fork the repository on GitHub.  
-2. In Vercel, click **Import Project → Continue** and select your fork.  
-3. Set the required environment variables (`NEXT_PUBLIC_API_BASE_URL`, `RESEND_API_KEY`, etc.) in the Vercel dashboard.  
-4. Click **Deploy** – Vercel will run `npm ci && npm run build` automatically.  
-
-### Docker  
-
-A Dockerfile is included for containerised deployments.
-
-```bash
-#
+* **Prettier** is configured for consistent formatting (`npm
