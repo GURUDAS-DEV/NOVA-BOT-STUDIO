@@ -90,10 +90,10 @@ export interface PeakUsageMetrics {
  */
 
 export interface ChartDataset {
-  label: string;
+  label?: string;
   data: number[];
   borderColor?: string;
-  backgroundColor?: string;
+  backgroundColor?: string | string[] | undefined;
   borderWidth?: number;
   fill?: boolean;
   tension?: number;
@@ -101,7 +101,8 @@ export interface ChartDataset {
   pointBackgroundColor?: string;
   borderDash?: number[];
   yAxisID?: string;
-  type?: "line" | "bar";
+  pointBorderColor?: string;
+  pointBorderWidth?: number;
 }
 
 export interface ChartConfig {
@@ -110,5 +111,6 @@ export interface ChartConfig {
     labels: string[];
     datasets: ChartDataset[];
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   options?: Record<string, any>;
 }

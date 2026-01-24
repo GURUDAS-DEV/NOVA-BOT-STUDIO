@@ -17,6 +17,11 @@ import {
 /**
  * Get Chart.js theme colors based on theme mode
  */
+interface contextInterface{
+  label: string;
+  parsed: number;
+}
+
 export const getChartThemeColors = (isDark: boolean) => {
   return {
     primary: isDark ? "#3b82f6" : "#2563eb",
@@ -357,7 +362,7 @@ export const createEventDistributionConfig = (
           borderWidth: 1,
           padding: 12,
           callbacks: {
-            label: function (context: any) {
+            label: function (context: contextInterface) {
               const label = context.label || "";
               const value = context.parsed || 0;
               const total = data.reduce((a, b) => a + b, 0);
@@ -495,7 +500,7 @@ export const createPlanDistributionConfig = (
           borderWidth: 1,
           padding: 12,
           callbacks: {
-            label: function (context: any) {
+            label: function (context: contextInterface) {
               const label = context.label || "";
               const value = context.parsed || 0;
               const total = planMetrics.reduce((a, b) => a + b.requests, 0);
@@ -585,7 +590,7 @@ export const createSuccessRateConfig = (
           max: 100,
           beginAtZero: true,
           ticks: {
-            callback: function (value: any) {
+            callback: function (value: string | number) {
               return value + "%";
             },
           },

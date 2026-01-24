@@ -5,6 +5,7 @@
 
 "use client";
 
+import * as React from "react";
 import { useTheme } from "next-themes";
 import {
   AnalyticsRecord,
@@ -107,8 +108,8 @@ export const useAnalytics = (data: AnalyticsRecord[] = []): AnalyticsHookReturn 
   const { theme } = useTheme();
   const isDark = theme === "dark" || theme === "system";
 
-  // Initialize filtered data state (would typically use useState)
-  let filteredData = [...data];
+  // Use the provided data directly for processing
+  const filteredData = [...data];
 
   // Process time series data
   const requestsHourly = groupByHour(filteredData);
@@ -152,29 +153,29 @@ export const useAnalytics = (data: AnalyticsRecord[] = []): AnalyticsHookReturn 
   const regionDistributionConfig = createRegionDistributionConfig(regionMetrics, isDark);
   const successRateConfig = createSuccessRateConfig(eventMetrics.successRate, isDark);
 
-  // Filter functions (would typically update state in a real component)
+  // Filter functions (return new filtered data without reassignment)
   const filterByDateRange = (startDate: Date, endDate: Date) => {
-    filteredData = filterRecordsByDateRange(filteredData, startDate, endDate);
+    return filterRecordsByDateRange(filteredData, startDate, endDate);
   };
 
   const filterByEventType = (eventType: EventType) => {
-    filteredData = filterRecordsByEventType(filteredData, eventType);
+    return filterRecordsByEventType(filteredData, eventType);
   };
 
   const filterByModel = (model: string) => {
-    filteredData = filterRecordsByModel(filteredData, model);
+    return filterRecordsByModel(filteredData, model);
   };
 
   const filterByPlan = (plan: "free" | "pro") => {
-    filteredData = filterRecordsByPlan(filteredData, plan);
+    return filterRecordsByPlan(filteredData, plan);
   };
 
   const filterByRegion = (region: string) => {
-    filteredData = filterRecordsByRegion(filteredData, region);
+    return filterRecordsByRegion(filteredData, region);
   };
 
   const resetFilters = () => {
-    filteredData = [...data];
+    return [...data];
   };
 
   return {
@@ -264,9 +265,6 @@ export const useFetchAnalyticsData = (botId: string | undefined) => {
   return { data, loading, error };
 };
 
-// Import React for the hook
-import * as React from "react";
-
 /**
  * Advanced filtering hook with state management
  * Use this in components that need dynamic filtering
@@ -300,11 +298,14 @@ export const useAnalyticsFilters = (initialData: AnalyticsRecord[]) => {
   }, [initialData, activeFilters]);
 
   const updateFilter = React.useCallback(
-    (filterName: keyof typeof activeFilters, value: any) => {
-      setActiveFilters((prev) => ({
-        ...prev,
-        [filterName]: prev[filterName as any] === value ? null : value,
-      }));
+    (filterName: keyof typeof activeFilters, value: string) => {
+      setActiveFilters((prev) => {
+        const currentValue = prev[filterName];
+        return {
+          ...prev,
+          [filterName]: currentValue === value ? null : value,
+        };
+      });
     },
     []
   );

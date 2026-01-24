@@ -6,7 +6,7 @@
 
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import { Line, Bar, Doughnut, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -140,16 +140,9 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
   error = null,
 }) => {
   const [timePeriod, setTimePeriod] = React.useState<"hourly" | "daily">("hourly");
-  const [selectedModel, setSelectedModel] = React.useState<string | null>(null);
-  const [selectedPlan, setSelectedPlan] = React.useState<"free" | "pro" | null>(null);
-  const [selectedRegion, setSelectedRegion] = React.useState<string | null>(null);
-
-  // Get analytics data
-  const analytics = useAnalytics(data);
 
   // Filter data based on selections
-  const { filteredData, activeFilters, updateFilter, resetAllFilters } =
-    useAnalyticsFilters(data);
+  const { filteredData } = useAnalyticsFilters(data);
 
   // Get filtered analytics
   const filteredAnalytics = useAnalytics(filteredData);

@@ -409,12 +409,12 @@ export function MetricCards({ data }) {
       <Card
         label="Total Requests"
         value={metrics.requests}
-        subtext={`Success Rate: ${metrics.successRate.toFixed(1)}%`}
+        subtext={\`Success Rate: \${metrics.successRate.toFixed(1)}%\`}
       />
       <Card
         label="Errors"
         value={metrics.errors}
-        subtext={`Timeouts: ${metrics.timeouts}`}
+        subtext={\`Timeouts: \${metrics.timeouts}\`}
       />
       <Card
         label="Total Tokens"
