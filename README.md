@@ -329,8 +329,6 @@ Returns a list of bots (including website bots) with their current API keys and 
 | 401 | Not authenticated |
 | 500 | Server error while fetching bots |
 
----  
-
 ### 2️⃣ Generate a new API key for a specific website bot
 
 **Endpoint**
@@ -381,7 +379,7 @@ Creates a fresh API key for the given website bot. The old key becomes invalid.
 
 1. Follow the **Getting Started** steps above.  
 2. Run `npm run lint` to ensure code quality.  
-3. (Optional) Install VS Code extensions: **ESLint**, **Prettier**, **Tailwind CSS IntelliSense**, **React**.  
+3. (Optional) Install VS Code extensions: **ESLint**, **Prettier**, **Tailwind CSS IntelliSense**, **React**.
 
 ### Running tests  
 
@@ -393,4 +391,26 @@ npm run test
 
 ### Code style  
 
-* **Prettier** is configured for consistent formatting (`npm
+* **Prettier** is configured for consistent formatting (`npm run format`).  
+* **ESLint** uses the Next.js preset plus additional rules for React hooks and TypeScript.  
+* Commit messages should follow the conventional‑commits style.
+
+---  
+
+## Deployment  
+
+### Vercel (recommended)
+
+1. Push your changes to the `main` branch.  
+2. In the Vercel dashboard, import the repository and set the following environment variables:  
+
+| Variable | Scope | Description |
+|----------|-------|-------------|
+| `NEXT_PUBLIC_API_BASE_URL` | Preview & Production | URL of the backend API |
+| `RESEND_API_KEY` | Production | Resend API key for transactional emails |
+
+3. Vercel will automatically run `npm ci && npm run build` and deploy the output.
+
+### Docker  
+
+A multi‑
