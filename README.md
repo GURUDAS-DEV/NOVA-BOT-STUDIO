@@ -321,9 +321,22 @@ export default function Playground() {
 
 ---  
 
-## Contributing  
+## Development  
 
-We welcome contributions! Please follow these steps:
+### Setting up the development environment  
 
-1. **Fork** the repository and create a feature branch.  
-2. **Install** the project locally (see *
+1. Follow the **Getting Started** steps above.  
+2. Run `npm run lint` to verify code quality.  
+3. Run `npm run test` (once tests are added) to ensure functionality.  
+
+### Code style  
+
+* **TypeScript** – strict mode enabled (`tsconfig.json`).  
+* **Prettier** – run `npm run format` before committing.  
+* **ESLint** – follows the `eslint-config-next` preset; no warnings should appear in CI.  
+
+### Debugging tips  
+
+* Use the built‑in **React DevTools** and **Next.js Fast Refresh** for UI debugging.  
+* API errors are surfaced via `sonner` toast notifications; check the browser console for stack traces.  
+* For server‑side issues, inspect
