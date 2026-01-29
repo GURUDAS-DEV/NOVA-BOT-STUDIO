@@ -44,6 +44,7 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 | **Deployment** | One‑click Vercel deployment & Docker support | ✅ Stable |
 | **Analytics** | Built‑in usage analytics visualised in the dashboard | ✅ Stable |
 | **Internationalisation** | Basic i18n support for UI strings | 🟡 Beta |
+| **API Keys Management** | Centralised UI for managing platform‑specific API keys (now uses React Suspense for lazy loading) | ✅ Stable |
 
 ---  
 
@@ -51,7 +52,7 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 
 | Layer | Technology | Reason |
 |-------|------------|--------|
-| **Framework** | **Next.js 16** (React 19) | File‑system routing, API routes, hybrid SSR/CSR |
+| **Framework** | **Next.js 16** (React 19) | File‑system routing, hybrid SSR/CSR |
 | **Language** | **TypeScript** | End‑to‑end type safety |
 | **Styling** | **TailwindCSS 4**, `tw-animate-css` | Utility‑first, rapid UI prototyping |
 | **State Management** | **Zustand** | Minimalist global store (`useAuthStore`, `useBotStore`) |
@@ -77,17 +78,19 @@ src/
 │  │   ├─ TopBar.tsx          ← User menu, theme switch, notifications
 │  │   ├─ home/
 │  │   │   ├─ page.tsx        ← Dashboard home
+│  │   │   ├─ API_Keys/
+│  │   │   │   └─ page.tsx    ← API keys management (uses Suspense)
 │  │   │   └─ Edit-Bot-Config/
 │  │   │       └─ Website/
 │  │   │           └─ FreeStyle/
 │  │   │               └─ (id)/
-│  │   │                   └─ page.tsx   ← “Edit Bot Config – Website FreeStyle” page
+│  │   │                   └─ page.tsx   ← “Edit Bot Config – Website FreeStyle”
 │  │   └─ …                    ← Other private sections (create, manage, stats)
 │  ├─ (public)       ← Public‑facing pages (landing, FAQ, pricing)
 │  │   └─ Footer.tsx
 │  └─ page.tsx       ← Root page (redirects based on auth)
 ├─ components/
-│  └─ ui/            ← Re‑usable UI primitives (Button, Spinner, …)
+│  └─ ui/            ← Re‑usable UI primitives (Button, Card, Spinner, …)
 ├─ lib/
 │  ├─ Store/         ← Zustand stores (auth, bot data)
 │  ├─ Types/         ← TypeScript interfaces
@@ -99,11 +102,11 @@ src/
 * **Routing** – Next.js file‑system routing separates public and private routes using the `(public)` and `(private)` folders.  
 * **Auth** – `useAuthStore` holds `isLoggedIn`, `userId`, `username`, `email` and provides helpers like `refreshUser` and `logout`.  
 * **Environment** – `NEXT_PUBLIC_API_BASE_URL` points to the backend API (e.g., `https://api.nova-bot.studio`).  
-* **Config Editor** – The `Edit‑Bot‑Config/Website/FreeStyle/(id)/page.tsx` component renders a rich editor that lets users modify HTML/CSS/JS snippets for a specific bot (`id`). Changes are persisted via the backend PATCH endpoint `/api/bots/:id`.
+* **API Keys Page** – The new implementation wraps the key‑cards in a `Suspense` boundary, showing a spinner while the platform list loads. This improves perceived performance and keeps the UI responsive.
 
 ---  
 
-## Getting Started  
+## Installation  
 
 ### Prerequisites  
 
@@ -117,7 +120,7 @@ src/
 
 A running **backend API** that implements authentication, bot CRUD and analytics is required. Supply its URL via `NEXT_PUBLIC_API_BASE_URL`.
 
-### Installation  
+### Steps  
 
 ```bash
 # 1️⃣ Clone the repository
@@ -129,6 +132,9 @@ npm ci   # or `pnpm install` / `yarn install`
 
 # 3️⃣ Copy the example environment file
 cp .env.example .env.local
+
+# 4️⃣ Edit .env.local (see below) and then start the dev server
+npm run dev
 ```
 
 ### Configuration  
@@ -145,13 +151,13 @@ RESEND_API_KEY=your_resend_api_key
 
 > **Note:** Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. All other variables remain server‑only.
 
-### Verify the installation  
+### Verify  
 
 ```bash
 npm run dev
 ```
 
-Open <http://localhost:3000>. You should see the public landing page. After logging in (or using the mock auth flow), you’ll be redirected to the dashboard.
+Open <http://localhost:3000>. You should see the public landing page. After logging in (or using the mock auth flow), you’ll be redirected to the dashboard where the **API Keys** section now loads its platform cards lazily with a spinner.
 
 ---  
 
@@ -210,6 +216,40 @@ export const CreateBot = () => {
   );
 };
 ```
+
+### Example: Managing API keys (new Suspense‑based page)
+
+```tsx
+import { Suspense } from "react";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
+
+const PlatformCard = ({ platform }) => (
+  <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+    <CardHeader>
+      <platform.icon className={platform.color + " text-2xl"} />
+      <CardTitle>{platform.name}</CardTitle>
+      <CardDescription>{platform.description}</CardDescription>
+    </CardHeader>
+  </Card>
+);
+
+export default function APIKeysPage() {
+  return (
+    <Suspense fallback={<Spinner className="mx-auto my-8" />}>
+      {/* Platform data is fetched inside the component; while loading the spinner shows */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Example platform list – actual data comes from the backend */}
+        {platforms.map(p => (
+          <PlatformCard key={p.id} platform={p} />
+        ))}
+      </div>
+    </Suspense>
+  );
+}
+```
+
+> The page now displays a loading spinner while the list of platforms (Website, Discord, Telegram, Instagram, WhatsApp) is being fetched, providing a smoother UX.
 
 ### Example: Editing a website bot’s FreeStyle configuration
 
@@ -291,16 +331,6 @@ All API calls are made to the URL defined in `NEXT_PUBLIC_API_BASE_URL`. The bac
 GET /api/APIKeyManagement/GetApiKeyForAllBots
 ```
 
-**Description**  
-Returns a list of bots (including website bots) with their current API keys and status.
-
-**Request Headers**
-
-| Header | Value |
-|--------|-------|
-| `Content-Type` | `application/json` |
-| `Cookie` | Session cookie (automatically sent when `credentials: "include"` is used) |
-
 **Response (200)**
 
 ```json
@@ -322,13 +352,6 @@ Returns a list of bots (including website bots) with their current API keys and 
 }
 ```
 
-**Error Responses**
-
-| Code | Reason |
-|------|--------|
-| 401 | Not authenticated |
-| 500 | Server error while fetching bots |
-
 ### 2️⃣ Generate a new API key for a specific website bot
 
 **Endpoint**
@@ -336,9 +359,6 @@ Returns a list of bots (including website bots) with their current API keys and 
 ```
 POST /api/APIKeyManagement/GenerateNewApiKeyForWebsite
 ```
-
-**Description**  
-Creates a fresh API key for the given website bot. The old key becomes invalid.
 
 **Request Body**
 
@@ -348,13 +368,6 @@ Creates a fresh API key for the given website bot. The old key becomes invalid.
 }
 ```
 
-**Request Headers**
-
-| Header | Value |
-|--------|-------|
-| `Content-Type` | `application/json` |
-| `Cookie` | Session cookie (automatically sent when `credentials: "include"` is used) |
-
 **Response (200)**
 
 ```json
@@ -363,54 +376,12 @@ Creates a fresh API key for the given website bot. The old key becomes invalid.
 }
 ```
 
-**Error Responses**
+### Error Responses (common)
 
 | Code | Reason |
 |------|--------|
-| 400 | Missing or invalid `botId` |
 | 401 | Not authenticated |
-| 500 | Server error while generating the key |
+| 400 | Bad request / missing parameters |
+| 500 | Server error |
 
----  
-
-## Development  
-
-### Setting up the development environment  
-
-1. Follow the **Getting Started** steps above.  
-2. Run `npm run lint` to ensure code quality.  
-3. (Optional) Install VS Code extensions: **ESLint**, **Prettier**, **Tailwind CSS IntelliSense**, **React**.
-
-### Running tests  
-
-```bash
-npm run test
-```
-
-> *The repository currently contains placeholder scripts – add Jest, React Testing Library, or Playwright tests as the project grows.*
-
-### Code style  
-
-* **Prettier** is configured for consistent formatting (`npm run format`).  
-* **ESLint** uses the Next.js preset plus additional rules for React hooks and TypeScript.  
-* Commit messages should follow the conventional‑commits style.
-
----  
-
-## Deployment  
-
-### Vercel (recommended)
-
-1. Push your changes to the `main` branch.  
-2. In the Vercel dashboard, import the repository and set the following environment variables:  
-
-| Variable | Scope | Description |
-|----------|-------|-------------|
-| `NEXT_PUBLIC_API_BASE_URL` | Preview & Production | URL of the backend API |
-| `RESEND_API_KEY` | Production | Resend API key for transactional emails |
-
-3. Vercel will automatically run `npm ci && npm run build` and deploy the output.
-
-### Docker  
-
-A multi‑
+*All other backend endpoints
