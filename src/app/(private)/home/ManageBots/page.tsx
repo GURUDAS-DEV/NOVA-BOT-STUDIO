@@ -118,7 +118,7 @@ const ManageBotsPage = () => {
         setHasMore(data.hasMore);
         setHasMore(false);
         setHasMore(data.hasMore);
-        setNoOfBots(data.totalBots);
+        setNoOfBots(data?.totals?.total);
       }
     } catch (e) {
       console.error("Error fetching bots:", e);
