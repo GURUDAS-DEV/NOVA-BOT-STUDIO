@@ -102,7 +102,7 @@ src/
 * **Routing** – Next.js file‑system routing separates public and private routes using the `(public)` and `(private)` folders.  
 * **Auth** – `useAuthStore` holds `isLoggedIn`, `userId`, `username`, `email` and provides helpers like `refreshUser` and `logout`.  
 * **Environment** – `NEXT_PUBLIC_API_BASE_URL` points to the backend API (e.g., `https://api.nova-bot.studio`).  
-* **API Keys Page** – The new implementation wraps the key‑cards in a `Suspense` boundary, showing a spinner while the platform list loads. This improves perceived performance and keeps the UI responsive.
+* **API Keys Page** – The new implementation wraps the platform cards in a `Suspense` boundary, showing a spinner while the platform list loads. This improves perceived performance and keeps the UI responsive.
 
 ---  
 
@@ -133,7 +133,7 @@ npm ci   # or `pnpm install` / `yarn install`
 # 3️⃣ Copy the example environment file
 cp .env.example .env.local
 
-# 4️⃣ Edit .env.local (see below) and then start the dev server
+# 4️⃣ Edit .env.local (see below) and start the dev server
 npm run dev
 ```
 
@@ -319,69 +319,23 @@ export default function EditFreeStylePage() {
 
 ---  
 
-## API Documentation  
+## Development  
 
-All API calls are made to the URL defined in `NEXT_PUBLIC_API_BASE_URL`. The backend expects **session cookies** for authentication (the frontend sends `credentials: "include"`).
+### Setting up the development environment  
 
-### 1️⃣ Get API keys for all bots (Website platform)
+1. Follow the **Installation** steps above.  
+2. Ensure the backend API is reachable (you can use a local mock server if needed).  
 
-**Endpoint**
+### Running tests  
 
-```
-GET /api/APIKeyManagement/GetApiKeyForAllBots
-```
-
-**Response (200)**
-
-```json
-{
-  "bots": [
-    {
-      "_id": "64f1a2b3c4d5e6f7a8b9c0d1",
-      "userId": "user_123",
-      "name": "Support Bot",
-      "botDescription": "Handles FAQ",
-      "platform": "Website",
-      "status": "active",
-      "createdAt": "2024-09-01T12:34:56.789Z",
-      "lastUsed": "2024-09-10T08:15:30.123Z",
-      "requestCount": 1245
-    }
-    // …more bots
-  ]
-}
+```bash
+npm run test
 ```
 
-### 2️⃣ Generate a new API key for a specific website bot
+> The repository currently contains placeholder scripts; add Jest, Playwright or Cypress tests as the project grows.
 
-**Endpoint**
+### Code style  
 
-```
-POST /api/APIKeyManagement/GenerateNewApiKeyForWebsite
-```
-
-**Request Body**
-
-```json
-{
-  "botId": "64f1a2b3c4d5e6f7a8b9c0d1"
-}
-```
-
-**Response (200)**
-
-```json
-{
-  "apiKey": "newly-generated-api-key-1234567890abcdef"
-}
-```
-
-### Error Responses (common)
-
-| Code | Reason |
-|------|--------|
-| 401 | Not authenticated |
-| 400 | Bad request / missing parameters |
-| 500 | Server error |
-
-*All other backend endpoints
+* **Linting** – `npm run lint` (ESLint with the Next.js preset).  
+* **Formatting** – `npm run format` (Prettier).  
+* **Commit messages** – Follow the conventional commits style
