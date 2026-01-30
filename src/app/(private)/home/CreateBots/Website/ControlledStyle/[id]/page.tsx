@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { Plus, Trash2, ChevronRight, ArrowLeft } from "lucide-react";
+import { FiCheckCircle, FiSettings, FiLoader } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "sonner";
 
@@ -69,7 +71,8 @@ interface Bot {
 }
 
 export default function ControlledBotBuilder() {
-  const botId = "bot-1";
+  const params = useParams();
+  const botId = params?.id as string || "";
   const botName = "Support Bot";
 
   const [bot, setBot] = useState<Bot>({
@@ -106,6 +109,64 @@ export default function ControlledBotBuilder() {
 
   const selectedNode = bot.nodes.find((n) => n.id === selectedNodeId);
   const selectedOption = selectedNode?.options.find((o) => o.id === selectedOptionId);
+  
+  const [doesBotFound, setDoesBotFound] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [botNotFound, setBotNotFound] = useState<boolean>(false);
+
+  const findBot = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/getControlledBotById/${botId}`, {
+        method : "GET",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials : 'include',
+      });
+
+      const data = await response.json();
+      console.log("Find bot response data:", data);
+      if(!response.ok){
+        // 404: Bot not found
+        if(response.status === 404){
+          setBotNotFound(true);
+          setDoesBotFound(false);
+        }
+        // 400: Bot is already being configured
+        else if(response.status === 400){
+          toast.error(data.message || "Bot is already being configured");
+          setDoesBotFound(true);
+          setBotNotFound(false);
+        }
+        // Other errors
+        else{
+          toast.error(data.message || "Failed to find bot");
+          setBotNotFound(false);
+          setDoesBotFound(false);
+        }
+      }
+      else{
+        // 200: Bot found successfully and ready to configure
+        toast.success(data.message || "Bot found successfully");
+        setDoesBotFound(false);
+        setBotNotFound(false);
+      }
+    } 
+    catch (e) {
+      console.error("Error finding bot:", e);
+      setBotNotFound(false);
+      setDoesBotFound(false);
+    }
+    finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(()=>{
+    findBot();
+  },[botId]);
+
 
 
   const createControlledStyleBot = async () => {
@@ -129,7 +190,7 @@ export default function ControlledBotBuilder() {
         headers : {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ bot }),
+        body: JSON.stringify({ bot, botId }),
         credentials : 'include',
       })
 
@@ -286,11 +347,121 @@ export default function ControlledBotBuilder() {
   };
 
   // Link tested option to target node
-  
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen w-full bg-stone-100 dark:bg-stone-900 text-stone-900 dark:text-white font-inter flex items-center justify-center px-6">
+        <div className="w-full max-w-xl rounded-2xl border border-stone-200 dark:border-stone-800 bg-white/80 dark:bg-stone-900/60 backdrop-blur p-6 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-full border border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+              <FiLoader className="h-6 w-6 text-pink-600 dark:text-pink-400 animate-spin" />
+            </div>
+            <div>
+              <h2 className="text-lg font-outfit font-bold">Checking your bot setup</h2>
+              <p className="text-sm text-stone-600 dark:text-stone-300">Hold on while we verify if this bot already exists.</p>
+            </div>
+          </div>
+          <div className="mt-5 h-2 w-full rounded-full bg-stone-200 dark:bg-stone-800 overflow-hidden">
+            <div className="h-full w-2/3 bg-linear-to-r from-pink-500 to-purple-600 animate-pulse" />
+          </div>
+          <p className="mt-4 text-xs text-stone-500 dark:text-stone-400">This usually takes a moment.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (doesBotFound) {
+    return (
+      <div className="min-h-screen w-full bg-stone-100 dark:bg-stone-900 text-stone-900 dark:text-white font-inter flex items-center justify-center px-6">
+        <div className="w-full max-w-2xl rounded-2xl border border-stone-200 dark:border-stone-800 bg-white/90 dark:bg-stone-900/70 backdrop-blur p-8 shadow-xl">
+          <div className="flex items-start gap-4">
+            <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center">
+              <FiCheckCircle className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-outfit font-bold">This bot is already set up</h2>
+              <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
+                You can’t create this controlled bot again. If you want to adjust it, open the configuration view to update the flow.
+              </p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-800/50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">Status</p>
+                  <p className="mt-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">Active & configured</p>
+                </div>
+                <div className="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-800/50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">Next step</p>
+                  <p className="mt-2 text-sm font-medium text-stone-700 dark:text-stone-200">Review or edit settings</p>
+                </div>
+              </div>
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <Button className="bg-linear-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white">
+                  <FiSettings className="mr-2 h-4 w-4" />
+                  Configure bot
+                </Button>
+                <Button variant="ghost" className="text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800">
+                  Go back
+                </Button>
+              </div>
+              <p className="mt-4 text-xs text-stone-500 dark:text-stone-400">
+                Need a fresh flow? Create a new bot from scratch.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (botNotFound) {
+    return (
+      <div className="min-h-screen w-full bg-stone-100 dark:bg-stone-900 text-stone-900 dark:text-white font-inter flex items-center justify-center px-6">
+        <div className="w-full max-w-2xl rounded-2xl border border-stone-200 dark:border-stone-800 bg-white/90 dark:bg-stone-900/70 backdrop-blur p-8 shadow-xl">
+          <div className="flex items-start gap-4">
+            <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/40 border border-red-200 dark:border-red-800 flex items-center justify-center">
+              <FiCheckCircle className="h-6 w-6 text-red-600 dark:text-red-400 transform rotate-45" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-outfit font-bold">Bot not found</h2>
+              <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
+                The bot ID you provided does not exist. Please check the URL and try again, or create a new bot from scratch.
+              </p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-800/50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">Status</p>
+                  <p className="mt-2 text-sm font-medium text-red-600 dark:text-red-400">Bot ID invalid</p>
+                </div>
+                <div className="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-800/50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">Current ID</p>
+                  <p className="mt-2 text-sm font-medium text-stone-600 dark:text-stone-300 truncate">{botId || "Not provided"}</p>
+                </div>
+              </div>
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <Button 
+                  onClick={() => window.location.href = '/home/CreateBots'}
+                  className="bg-linear-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white"
+                >
+                  Create new bot
+                </Button>
+                <Button 
+                  onClick={() => window.history.back()}
+                  variant="ghost" 
+                  className="text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800"
+                >
+                  Go back
+                </Button>
+              </div>
+              <p className="mt-4 text-xs text-stone-500 dark:text-stone-400">
+                Double-check the bot ID in the URL: it should be a valid MongoDB ObjectID format.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-stone-900 text-white font-inter">
+    <div className="flex flex-col lg:flex-row h-screen bg-stone-100 dark:bg-stone-900 text-stone-900 dark:text-white font-inter">
       {/* Left: Node Flow Visualization */}
       <Toaster richColors position="top-right" />
       <div className="flex-1 border-b lg:border-b-0 lg:border-r border-stone-700 p-6 overflow-y-auto">

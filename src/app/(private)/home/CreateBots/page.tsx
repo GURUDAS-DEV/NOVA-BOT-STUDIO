@@ -164,6 +164,27 @@ const CreateBotPage = () => {
     }
   }
 
+  const createControlledStyleBot = async (): Promise<void> => {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/createControlledBot`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ platform: selectedPlatform, name : botName, userId }),
+      credentials: 'include',
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      toast.error(data.message || "Failed to create Controlled Style bot");
+      console.log("Error creating Controlled Style bot:", data);
+      return;
+    }
+    toast.success("Controlled Style bot created successfully!");
+    router.push(`/home/CreateBots/Website/ControlledStyle/${data.botId}`);
+    
+  };
+
 
 
   return (
@@ -372,7 +393,9 @@ const CreateBotPage = () => {
             Cancel
           </Button>
           <Button 
-            onClick={createBots}
+            onClick={() => {
+              botStyle === "ControlledStyle" ? createControlledStyleBot() : createBots();
+            }}
             disabled={
               !botName.trim() || 
               !selectedPlatform || 
