@@ -44,7 +44,8 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 | **Deployment** | One‑click Vercel deployment & Docker support | ✅ Stable |
 | **Analytics** | Built‑in usage analytics visualised in the dashboard | ✅ Stable |
 | **Internationalisation** | Basic i18n support for UI strings | 🟡 Beta |
-| **API Keys Management** | Centralised UI for managing platform‑specific API keys (now uses React Suspense for lazy loading) | ✅ Stable |
+| **API Keys Management** | Centralised UI for managing platform‑specific API keys (React Suspense lazy loading) | ✅ Stable |
+| **Playground** | Private sandbox page for rapid UI prototyping and testing new components | 🟡 Experimental |
 
 ---  
 
@@ -78,9 +79,11 @@ src/
 │  │   ├─ TopBar.tsx          ← User menu, theme switch, notifications
 │  │   ├─ home/
 │  │   │   ├─ page.tsx        ← Dashboard home
+│  │   │   ├─ Playground/
+│  │   │   │   └─ page.tsx    ← **New sandbox page** for rapid UI experiments
 │  │   │   ├─ API_Keys/
-│  │   │   │   └─ page.tsx    ← API keys management (uses Suspense)
-│  │   │   └─ Edit-Bot-Config/
+│  │   │   │   └─ page.tsx    ← API keys management (Suspense‑based)
+│  │   │   └─ Edit‑Bot‑Config/
 │  │   │       └─ Website/
 │  │   │           └─ FreeStyle/
 │  │   │               └─ (id)/
@@ -102,7 +105,7 @@ src/
 * **Routing** – Next.js file‑system routing separates public and private routes using the `(public)` and `(private)` folders.  
 * **Auth** – `useAuthStore` holds `isLoggedIn`, `userId`, `username`, `email` and provides helpers like `refreshUser` and `logout`.  
 * **Environment** – `NEXT_PUBLIC_API_BASE_URL` points to the backend API (e.g., `https://api.nova-bot.studio`).  
-* **API Keys Page** – The new implementation wraps the platform cards in a `Suspense` boundary, showing a spinner while the platform list loads. This improves perceived performance and keeps the UI responsive.
+* **Playground Page** – A lightweight sandbox located at `/home/Playground`. It renders an empty `<div>` for now and serves as a testing ground for new UI components or experimental features without affecting the main dashboard.  
 
 ---  
 
@@ -157,7 +160,7 @@ RESEND_API_KEY=your_resend_api_key
 npm run dev
 ```
 
-Open <http://localhost:3000>. You should see the public landing page. After logging in (or using the mock auth flow), you’ll be redirected to the dashboard where the **API Keys** section now loads its platform cards lazily with a spinner.
+Open <http://localhost:3000>. You should see the public landing page. After logging in, you’ll be redirected to the dashboard. Navigate to **Playground** (`/home/Playground`) to see the new sandbox page.
 
 ---  
 
@@ -217,7 +220,7 @@ export const CreateBot = () => {
 };
 ```
 
-### Example: Managing API keys (new Suspense‑based page)
+### Example: Managing API keys (Suspense‑based page)
 
 ```tsx
 import { Suspense } from "react";
@@ -249,73 +252,29 @@ export default function APIKeysPage() {
 }
 ```
 
-> The page now displays a loading spinner while the list of platforms (Website, Discord, Telegram, Instagram, WhatsApp) is being fetched, providing a smoother UX.
+### Example: Using the **Playground** sandbox
 
-### Example: Editing a website bot’s FreeStyle configuration
+The Playground page is intentionally minimal – it provides a clean canvas for developers to drop in experimental components.
 
 ```tsx
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-
-export default function EditFreeStylePage() {
-  const router = useRouter();
-  const { id } = router.query as { id: string };
-  const [config, setConfig] = useState({ html: "", css: "", js: "" });
-  const [saving, setSaving] = useState(false);
-
-  // Load existing config
-  useEffect(() => {
-    if (!id) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bots/${id}`, {
-      credentials: "include",
-    })
-      .then((r) => r.json())
-      .then((data) => setConfig(data.freeStyle || { html: "", css: "", js: "" }));
-  }, [id]);
-
-  const handleSave = async () => {
-    setSaving(true);
-    await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bots/${id}`, {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ freeStyle: config }),
-    });
-    setSaving(false);
-    router.push("/home/manage");
-  };
-
+// src/app/(private)/home/Playground/page.tsx
+export default function Playground() {
   return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-bold">Edit FreeStyle – Bot {id}</h1>
+    <div className="p-8">
+      <h1 className="text-2xl font-bold mb-4">Playground</h1>
+      <p className="text-gray-600">
+        This area is reserved for rapid UI prototyping. Add your experimental
+        components here and they will be isolated from the production dashboard.
+      </p>
 
-      <textarea
-        className="w-full h-40 p-2 border rounded"
-        placeholder="HTML"
-        value={config.html}
-        onChange={(e) => setConfig({ ...config, html: e.target.value })}
-      />
-      <textarea
-        className="w-full h-40 p-2 border rounded"
-        placeholder="CSS"
-        value={config.css}
-        onChange={(e) => setConfig({ ...config, css: e.target.value })}
-      />
-      <textarea
-        className="w-full h-40 p-2 border rounded"
-        placeholder="JS"
-        value={config.js}
-        onChange={(e) => setConfig({ ...config, js: e.target.value })}
-      />
-
-      <Button onClick={handleSave} disabled={saving}>
-        {saving ? "Saving…" : "Save Changes"}
-      </Button>
+      {/* Example: render a temporary component */}
+      {/* <MyExperimentalWidget /> */}
     </div>
   );
 }
 ```
+
+Navigate to `/home/Playground` after login to view the page. Replace the placeholder markup with any component you wish to test.
 
 ---  
 
@@ -338,4 +297,72 @@ npm run test
 
 * **Linting** – `npm run lint` (ESLint with the Next.js preset).  
 * **Formatting** – `npm run format` (Prettier).  
-* **Commit messages** – Follow the conventional commits style
+* **Commit messages** – Follow the Conventional Commits style (`feat:`, `fix:`, `chore:`, etc.).  
+
+---  
+
+## Deployment  
+
+### Vercel (recommended)
+
+1. Connect the repository to Vercel.  
+2. Set the same environment variables defined in `.env.example` in the Vercel dashboard.  
+3. Vercel will automatically run `npm run build` and deploy the output.
+
+### Docker  
+
+```bash
+# Build the image
+docker build -t nova-bot-studio:latest .
+
+# Run the container
+docker run -p 3000:3000 \
+  -e NEXT_PUBLIC_API_BASE_URL=https://api.yourdomain.com \
+  -e RESEND_API_KEY=your_resend_api_key \
+  nova-bot-studio:latest
+```
+
+The app will be reachable at <http://localhost:3000>.
+
+---  
+
+## API Documentation  
+
+> **Note:** The front‑end communicates with a separate backend service. The backend’s OpenAPI spec is maintained in its own repository. Below are the most‑used endpoints from the front‑end perspective.
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| `POST` | `/api/auth/login` | Authenticate a user and set an HTTP‑only session cookie. | ❌ |
+| `GET` | `/api/bots` | Retrieve a list of bots owned by the authenticated user. | ✅ |
+| `POST` | `/api/bots` | Create a new bot (name, platform, template). | ✅ |
+| `GET` | `/api/bots/:id` | Get detailed configuration for a specific bot. | ✅ |
+| `PATCH` | `/api/bots/:id` | Update bot configuration (including FreeStyle HTML/CSS/JS). | ✅ |
+| `DELETE` | `/api/bots/:id` | Delete a bot. | ✅ |
+| `GET` | `/api/analytics/:botId` | Fetch usage statistics for a bot (messages, uptime, etc.). | ✅ |
+| `GET` | `/api/platforms` | List available messaging platforms for API‑key management. | ✅ |
+
+*All requests that require authentication must include the session cookie automatically managed by the browser (`credentials: "include"`).*
+
+---  
+
+## Contributing  
+
+We welcome contributions! Please follow these steps:
+
+1. **Fork** the repository and clone your fork.  
+2. **Create a feature branch** (`git checkout -b feat/playground-demo`).  
+3. **Install dependencies** and set up the environment as described in the Installation section.  
+4. **Make your changes** – ensure they pass linting and any existing tests.  
+5. **Write tests** for new functionality when applicable.  
+6. **Commit** using Conventional Commits (`feat: add playground demo`).  
+7. **Push** to your fork and open a Pull Request against `main`.  
+
+### Development workflow  
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Start local dev server with hot‑reload. |
+| `npm run lint` | Run ESLint. |
+| `npm run format` | Run Prettier. |
+| `npm run test` | Execute test suite. |
+| `
