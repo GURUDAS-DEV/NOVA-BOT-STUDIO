@@ -16,7 +16,7 @@ Nova Bot Studio is a modern SaaS‑style dashboard built with **Next.js 16** a
 * **Connect** to popular messaging platforms – Telegram, Discord, Instagram, WhatsApp – or a custom webhook.  
 * **Manage** bots, view real‑time statistics and control access from a unified admin panel.  
 
-The platform is fully **client‑side rendered** for a snappy experience, while a separate backend provides authentication, bot orchestration and analytics via a REST API.
+The platform runs **client‑side rendered** for a snappy UI, while a separate backend provides authentication, bot orchestration and analytics via a REST API.
 
 > **Target audience** – product managers, marketers, community managers, and developers who need a fast way to launch conversational agents without maintaining infrastructure.
 
@@ -46,6 +46,7 @@ The platform is fully **client‑side rendered** for a snappy experience, while 
 | **Internationalisation** | Basic i18n support for UI strings | 🟡 Beta |
 | **API Keys Management** | Centralised UI for managing platform‑specific API keys (React Suspense lazy loading) | ✅ Stable |
 | **Playground** | Private sandbox page for rapid UI prototyping and testing new components | 🟡 Experimental |
+| **Theming** | Dark / Light mode powered by `next-themes` | ✅ Stable |
 
 ---  
 
@@ -80,7 +81,7 @@ src/
 │  │   ├─ home/
 │  │   │   ├─ page.tsx        ← Dashboard home
 │  │   │   ├─ Playground/
-│  │   │   │   └─ page.tsx    ← **New sandbox page** for rapid UI experiments
+│  │   │   │   └─ page.tsx    ← Sandbox for rapid UI experiments
 │  │   │   ├─ API_Keys/
 │  │   │   │   └─ page.tsx    ← API keys management (Suspense‑based)
 │  │   │   └─ Edit‑Bot‑Config/
@@ -98,6 +99,7 @@ src/
 │  ├─ Store/         ← Zustand stores (auth, bot data)
 │  ├─ Types/         ← TypeScript interfaces
 │  ├─ analytics/     ← Analytics helpers
+│  ├─ posthog.ts
 │  └─ utils.ts       ← API wrappers, formatters, misc helpers
 └─ proxy.ts          ← Optional API‑proxy for server‑side requests
 ```
@@ -105,7 +107,6 @@ src/
 * **Routing** – Next.js file‑system routing separates public and private routes using the `(public)` and `(private)` folders.  
 * **Auth** – `useAuthStore` holds `isLoggedIn`, `userId`, `username`, `email` and provides helpers like `refreshUser` and `logout`.  
 * **Environment** – `NEXT_PUBLIC_API_BASE_URL` points to the backend API (e.g., `https://api.nova-bot.studio`).  
-* **Playground Page** – A lightweight sandbox located at `/home/Playground`. It renders an empty `<div>` for now and serves as a testing ground for new UI components or experimental features without affecting the main dashboard.  
 
 ---  
 
@@ -118,8 +119,8 @@ src/
 | **Node.js** | 20.x |
 | **npm** | 10.x (or `pnpm` / `yarn`) |
 | **Git** | any recent version |
-| **Vercel CLI** (optional) | 32.x for local preview |
 | **Docker** (optional) | 24.x for containerised dev |
+| **Vercel CLI** (optional) | 32.x for local preview |
 
 A running **backend API** that implements authentication, bot CRUD and analytics is required. Supply its URL via `NEXT_PUBLIC_API_BASE_URL`.
 
@@ -160,7 +161,7 @@ RESEND_API_KEY=your_resend_api_key
 npm run dev
 ```
 
-Open <http://localhost:3000>. You should see the public landing page. After logging in, you’ll be redirected to the dashboard. Navigate to **Playground** (`/home/Playground`) to see the new sandbox page.
+Open <http://localhost:3000>. You should see the public landing page. After logging in, you’ll be redirected to the dashboard. Navigate to **Playground** (`/home/Playground`) to view the new sandbox page.
 
 ---  
 
@@ -224,7 +225,12 @@ export const CreateBot = () => {
 
 ```tsx
 import { Suspense } from "react";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 
 const PlatformCard = ({ platform }) => (
@@ -243,7 +249,7 @@ export default function APIKeysPage() {
       {/* Platform data is fetched inside the component; while loading the spinner shows */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Example platform list – actual data comes from the backend */}
-        {platforms.map(p => (
+        {platforms.map((p) => (
           <PlatformCard key={p.id} platform={p} />
         ))}
       </div>
@@ -253,8 +259,6 @@ export default function APIKeysPage() {
 ```
 
 ### Example: Using the **Playground** sandbox
-
-The Playground page is intentionally minimal – it provides a clean canvas for developers to drop in experimental components.
 
 ```tsx
 // src/app/(private)/home/Playground/page.tsx
@@ -278,57 +282,9 @@ Navigate to `/home/Playground` after login to view the page. Replace the placeho
 
 ---  
 
-## Development  
-
-### Setting up the development environment  
-
-1. Follow the **Installation** steps above.  
-2. Ensure the backend API is reachable (you can use a local mock server if needed).  
-
-### Running tests  
-
-```bash
-npm run test
-```
-
-> The repository currently contains placeholder scripts; add Jest, Playwright or Cypress tests as the project grows.
-
-### Code style  
-
-* **Linting** – `npm run lint` (ESLint with the Next.js preset).  
-* **Formatting** – `npm run format` (Prettier).  
-* **Commit messages** – Follow the Conventional Commits style (`feat:`, `fix:`, `chore:`, etc.).  
-
----  
-
-## Deployment  
-
-### Vercel (recommended)
-
-1. Connect the repository to Vercel.  
-2. Set the same environment variables defined in `.env.example` in the Vercel dashboard.  
-3. Vercel will automatically run `npm run build` and deploy the output.
-
-### Docker  
-
-```bash
-# Build the image
-docker build -t nova-bot-studio:latest .
-
-# Run the container
-docker run -p 3000:3000 \
-  -e NEXT_PUBLIC_API_BASE_URL=https://api.yourdomain.com \
-  -e RESEND_API_KEY=your_resend_api_key \
-  nova-bot-studio:latest
-```
-
-The app will be reachable at <http://localhost:3000>.
-
----  
-
 ## API Documentation  
 
-> **Note:** The front‑end communicates with a separate backend service. The backend’s OpenAPI spec is maintained in its own repository. Below are the most‑used endpoints from the front‑end perspective.
+> The front‑end communicates with a separate backend service. The backend’s OpenAPI spec lives in its own repository. Below are the most‑used endpoints from the front‑end perspective.
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
@@ -341,7 +297,7 @@ The app will be reachable at <http://localhost:3000>.
 | `GET` | `/api/analytics/:botId` | Fetch usage statistics for a bot (messages, uptime, etc.). | ✅ |
 | `GET` | `/api/platforms` | List available messaging platforms for API‑key management. | ✅ |
 
-*All requests that require authentication must include the session cookie automatically managed by the browser (`credentials: "include"`).*
+*All authenticated requests must include the session cookie (`credentials: "include"`).*
 
 ---  
 
@@ -365,4 +321,29 @@ We welcome contributions! Please follow these steps:
 | `npm run lint` | Run ESLint. |
 | `npm run format` | Run Prettier. |
 | `npm run test` | Execute test suite. |
-| `
+| `npm run build` | Build production assets. |
+
+### Code style  
+
+* **Linting** – `npm run lint` (ESLint with the Next.js preset).  
+* **Formatting** – `npm run format` (Prettier).  
+* **Commit messages** – Follow the Conventional Commits style (`feat:`, `fix:`, `chore:`, etc.).  
+
+---  
+
+## Deployment  
+
+### Vercel (recommended)
+
+1. Connect the repository to Vercel.  
+2. Add the environment variables from `.env.example` in the Vercel dashboard.  
+3. Vercel will automatically run `npm run build` and deploy the output.
+
+### Docker  
+
+```bash
+# Build the image
+docker build -t nova-bot-studio:latest .
+
+# Run the container
+docker run -p 300
