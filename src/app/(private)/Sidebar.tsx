@@ -25,6 +25,7 @@ import {
 } from "react-icons/bi"
 import { RiBillLine } from "react-icons/ri"
 import Image from "next/image"
+import { LucideTestTubes } from "lucide-react"
 
 const Sidebar = () => {
   const pathname = usePathname()
@@ -109,10 +110,10 @@ const Sidebar = () => {
         {/* Automation & API Keys Section */}
         <div className="mb-8 space-y-2">
           <NavLink
-            href="/home/automation"
-            label="Automation Center"
-            icon={BiCodeBlock}
-            active={isActive("/home/automation")}
+            href="/home/Playground"
+            label="Playground"
+            icon={LucideTestTubes}
+            active={isActive("/home/Playground")}
           />
           <NavLink
             href="/home/API_Keys"
