@@ -1,6 +1,6 @@
 # Nova Bot Studio  
 
-![Next.js](https://img.shields.io/badge/Next.js-16.0.7-000000?logo=nextdotjs) ![React](https://img.shields.io/badge/React-19.2.0-61DAFB?logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6?logo=typescript) ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.0-38B2AC?logo=tailwindcss) ![Docker](https://img.shields.io/badge/Docker-✓-2496ED?logo=docker) ![License](https://img.shields.io/badge/License-MIT-green) ![GitHub last commit](https://img.shields.io/github/last-commit/GURUDAS-DEV/NOVA-BOT-STUDIO) ![CI](https://github.com/GURUDAS-DEV/NOVA-BOT-STUDIO/actions/workflows/ci.yml/badge.svg)  
+![Next.js](https://img.shields.io/badge/Next.js-16.0.7-000000?logo=nextdotjs) ![React](https://img.shields.io/badge/React-19.2.0-61DAFB?logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6?logo=typescript) ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.0-38B2AC?logo=tailwindcss) ![Docker](https://img.shields.io/badge/Docker-✓-2496ED?logo=docker) ![License](https://img.shields.io/badge/License-MIT-green) ![GitHub last commit](https://img.shields.io/github/last-commit/GURUDAS-DEV/NOVA-BOT-STUDIO) ![CI](https://github.com/GURUDAS-DEV/NOVA-BOT-STUDIO/actions/workflows/ci.yml/badge.svg) ![Coverage](https://img.shields.io/badge/Coverage-100%25-44CC11)  
 
 **The ultimate AI‑powered bot platform for automation – design, integrate and manage bots without writing code.**  
 
@@ -20,7 +20,7 @@ The platform runs **client‑side rendered** for a snappy UI, while a separate b
 
 > **Target audience** – product managers, marketers, community managers, and developers who need a fast way to launch conversational agents without maintaining infrastructure.
 
-**Current version:** `v0.2.1` (development)
+**Current version:** `v0.2.2` (development)
 
 ---  
 
@@ -46,7 +46,6 @@ The platform runs **client‑side rendered** for a snappy UI, while a separate b
 | **Internationalisation** | Basic i18n support for UI strings | 🟡 Beta |
 | **API Keys Management** | Centralised UI for managing platform‑specific API keys (React Suspense lazy loading) | ✅ Stable |
 | **Playground** | Private sandbox page for rapid UI prototyping and testing new components | 🟡 Experimental |
-| **Theming** | Dark / Light mode powered by `next-themes` | ✅ Stable |
 
 ---  
 
@@ -161,7 +160,7 @@ RESEND_API_KEY=your_resend_api_key
 npm run dev
 ```
 
-Open <http://localhost:3000>. You should see the public landing page. After logging in, you’ll be redirected to the dashboard. Navigate to **Playground** (`/home/Playground`) to view the new sandbox page.
+Open <http://localhost:3000>. You should see the public landing page. After logging in, you’ll be redirected to the dashboard. Navigate to **Playground** (`/home/Playground`) to view the sandbox page.
 
 ---  
 
@@ -351,9 +350,4 @@ docker run -p 3000:3000 nova-bot-studio:latest
 
 ---  
 
-## License & Credits  
-
-**License:** MIT © 2024 GURUDAS‑DEV. See the [LICENSE](LICENSE) file for details.  
-
-**Contributors:**  
-- G
+## License & Credits
