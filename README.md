@@ -346,4 +346,14 @@ We welcome contributions! Please follow these steps:
 docker build -t nova-bot-studio:latest .
 
 # Run the container
-docker run -p 300
+docker run -p 3000:3000 nova-bot-studio:latest
+```
+
+---  
+
+## License & Credits  
+
+**License:** MIT © 2024 GURUDAS‑DEV. See the [LICENSE](LICENSE) file for details.  
+
+**Contributors:**  
+- G
