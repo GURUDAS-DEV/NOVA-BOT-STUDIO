@@ -185,7 +185,7 @@ export default function ControlledBotBuilder() {
         }
       });
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/createControlledBot`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/setupWebsiteControlledStyleBotConfig`, {
         method : "POST",
         headers : {
           "Content-Type": "application/json"
