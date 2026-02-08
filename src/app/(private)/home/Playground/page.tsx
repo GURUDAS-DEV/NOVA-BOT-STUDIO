@@ -19,51 +19,46 @@ type ControlledOption = {
   optionId: string;
   intent: string;
   order?: number;
+  value?: string;
+};
+
+type ControlledNode = {
+  id: string;
+  title: string;
+  message?: string;
+  executor: string;
+  output?: {
+    mode: "options" | "text";
+    optionCount?: number;
+    allowGoBack?: boolean;
+    allowEnd?: boolean;
+    customText?: string;
+  };
+  inputConfig?: {
+    key?: string;
+    validationRegex?: string;
+    retryLimit?: number;
+  };
 };
 
 type ControlledResponse =
   | {
       type: "options";
       nodeData: {
-        node: {
-          id: string;
-          title: string;
-          message: string;
-          executor: string;
-          output: {
-            mode: "options";
-            optionCount: number;
-            allowGoBack: boolean;
-            allowEnd: boolean;
-          };
-        };
-        options: ControlledOption[];
-        isApiGenerated: boolean;
+        node: ControlledNode;
+        options?: ControlledOption[];
+        isApiGenerated?: boolean;
       };
+      options?: ControlledOption[];
+      chatSessionId?: string;
     }
   | {
       type: "input";
       nodeData: {
-        id: string;
-        title: string;
-        message: string;
-        executor: string;
-        output: {
-          mode: "text";
-          optionCount: number;
-          allowGoBack: boolean;
-          allowEnd: boolean;
-        };
-        inputConfig: {
-          retryLimit: number;
-        };
+        node: ControlledNode;
+        options?: ControlledOption[];
       };
-      options: ControlledOption[];
-    }
-  | {
-      type: "text";
-      nodeData: string;
-      options: ControlledOption[];
+      options?: ControlledOption[];
       back?: {
         label: string;
         _id: string;
@@ -72,7 +67,38 @@ type ControlledResponse =
         label: string;
         _id: string;
       };
+      chatSessionId?: string;
+    }
+  | {
+      type: "text" | "api";
+      message?: string;
+      nodeData: {
+        node: ControlledNode;
+        options?: ControlledOption[];
+      };
+      options?: ControlledOption[];
+      back?: {
+        label: string;
+        _id: string;
+      };
+      end?: {
+        label: string;
+        _id: string;
+      };
+      chatSessionId?: string;
     };
+
+const getControlledMessage = (response: ControlledResponse) => {
+  return (
+    (response as { message?: string })?.message ||
+    response.nodeData.node.message ||
+    ""
+  );
+};
+
+const getControlledOptions = (response: ControlledResponse) => {
+  return response.nodeData.options || response.options || [];
+};
 
 const PlaygroundPage = () => {
   const apiKey = useRef<HTMLInputElement | null>(null);
@@ -94,6 +120,10 @@ const PlaygroundPage = () => {
   const [showInputForControlled, setShowInputForControlled] = useState<boolean>(false);
   const [doesStarted, setDoesStarted] = useState<boolean>(false);
   const controlledInput = useRef<HTMLInputElement | null>(null);
+  const controlledChatSessionId = useRef<string | null>(null);
+  const [isControlledLoading, setIsControlledLoading] = useState(false);
+  const [isControlledEnded, setIsControlledEnded] = useState(false);
+  const [controlledEndMessage, setControlledEndMessage] = useState<string | null>(null);
   const [controlledMessages, setControlledMessages] = useState<Message[]>([]);
   const [controlledResponse, setControlledResponse] =
     useState<ControlledResponse | null>(null);
@@ -243,133 +273,181 @@ const PlaygroundPage = () => {
 
   ///////////Starting the conversation for controlled flow and getting the first node///////////
   //initial conversation........
-  const startConversation = async() : Promise<void>=>{
-    try{
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/websiteBot/ControlledStyleChat`,{
-        method : "POST",
-        headers : {
-          "Content-Type" : "application/json",
-          Authorization : `Bearer ${apiKey.current?.value}`,
+  const startConversation = async (): Promise<void> => {
+    try {
+      setIsControlledLoading(true);
+      setIsControlledEnded(false);
+      setControlledEndMessage(null);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/websiteBot/ControlledStyleChat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey.current?.value}`,
+          },
         },
-      });
-      const data = await response.json();
-      if(!response.ok){
-        toast.error("Failed to start conversation: " + data?.message);
+      );
+      const data: ControlledResponse = await response.json();
+      if (!response.ok) {
+        toast.error("Failed to start conversation: " + (data as { message?: string })?.message);
         return;
       }
       console.log("Start conversation response:", data);
 
-      const chatSessionId = data.chatSessionId;
-      document.cookie = `chatSessionId=${chatSessionId}; path=/; max-age=3600`;
+      if (!controlledChatSessionId.current && data.chatSessionId) {
+        controlledChatSessionId.current = data.chatSessionId;
+      }
 
       setDoesStarted(true);
       setControlledResponse(data);
-      setControlledMessages([{
-        id : `b-${new Date().getTime()}`,
-        role : "bot",
-        content : data.nodeData?.message || data.nodeData.node.message,
-        time : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      }]);
-      setControlledOptions(data?.nodeData?.options || []);
-    }
-    catch(e){
+      setControlledMessages([
+        {
+          id: `b-${new Date().getTime()}`,
+          role: "bot",
+          content: getControlledMessage(data),
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+      setControlledOptions(getControlledOptions(data));
+    } catch (e) {
       toast.error("Error starting conversation: " + (e as Error).message);
+    } finally {
+      setIsControlledLoading(false);
     }
   };
 
-  const handleNextStep = (response : ControlledResponse) => {
-    if(response.type === "input"){
+  const handleNextStep = (response: ControlledResponse) => {
+    if (response.chatSessionId && !controlledChatSessionId.current) {
+      controlledChatSessionId.current = response.chatSessionId;
+    }
+
+    if (response.type === "input") {
       console.log("Handling input type node");
       setShowInputForControlled(true);
-      
-
-    }
-    else if(response.type === "options"){ 
+    } else if (response.type === "options") {
       console.log("Handling options type node");
       setShowInputForControlled(false);
-      setControlledOptions((response as any).options);
-     
-      
-    }
-    else if(response.type === "text"){
-      console.log("Handling text type node");
+    } else if (response.type === "text" || response.type === "api") {
+      console.log("Handling text/api type node");
       setShowInputForControlled(false);
-      setControlledOptions((response as any).options || []);
-      
-    } 
-    else{
+    } else {
       console.log("Handling unknown type node");
     }
-    setControlledMessages((prev) => [...prev, {
-        id : `b-${new Date().getTime()}`,
-        role : "bot",
-        content : (response as any).nodeData.node.message,
-        time : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      }]);
-  }
 
-  const generalizedFunctionToGetNextNode = async(GivenData : {option?: string, userInput?: string})=>{
-    const chatSessionId = document.cookie.split("; ").find(row => row.startsWith("chatSessionId="))?.split("=")[1];
-    console.log("Cookie Found : " + chatSessionId);
-    try{
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/websiteBot/ControlledStyleChat`,{
-        method : "POST",
-        headers : {
-          "Content-Type" : "application/json",
-          Authorization : `Bearer ${apiKey.current?.value}`,
-          chatSessionId : `${chatSessionId}`,
+    setControlledOptions(getControlledOptions(response));
+    setControlledMessages((prev) => [
+      ...prev,
+      {
+        id: `b-${new Date().getTime()}`,
+        role: "bot",
+        content: getControlledMessage(response),
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      },
+    ]);
+  };
+
+  const sendControlledRequest = async (body?: Record<string, unknown>) => {
+    try {
+      setIsControlledLoading(true);
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey.current?.value}`,
+      };
+
+      if (controlledChatSessionId.current) {
+        headers.chatSessionId = controlledChatSessionId.current;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/websiteBot/ControlledStyleChat`,
+        {
+          method: "POST",
+          headers,
+          body: body ? JSON.stringify(body) : undefined,
         },
-        body : JSON.stringify({ input : GivenData.option || GivenData.userInput }),
-      });
+      );
 
-      const data = await response.json();
-      console.log("Response on option click:", data);
-
-      handleNextStep(data);
-    }
-    catch(e){
-      toast.error("Error handling option click: " + (e as Error).message);
-    }
-  }
-
-  const goBackOrEnd = async(option : ControlledOption)=>{
-    const chatSessionId = document.cookie.split("; ").find(row => row.startsWith("chatSessionId="))?.split("=")[1];
-    console.log("Cookie Found for go back or end : " + chatSessionId);
-    try{
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/websiteBot/ControlledStyleChat`,{
-        method : "POST",
-        headers : {
-          "Content-Type" : "application/json",
-          Authorization : `Bearer ${apiKey.current?.value}`,
-          chatSessionId : `${chatSessionId}`,
-        },
-        body : JSON.stringify({ action : option.optionId }),
-      });
-      const data = await response.json();
-      if(!response.ok){
-        toast.error("Failed to perform action: " + data?.message);
+      const data: ControlledResponse | { message?: string } = await response.json();
+      if (!response.ok) {
+        toast.error("Failed to get response: " + (data as { message?: string })?.message);
         return;
       }
-      else{
-        toast.success("Action performed: " + option.intent);
-      }
-    }
-    catch(e){
-      toast.error("Error handling go back or end action: " + (e as Error).message);
-    }
-  } 
 
-  const ActionOnClickOfOptions = async(option : ControlledOption)=>{
-    if(option.intent === "go_back" || option.intent === "end"){
-      await goBackOrEnd(option);
+      if ("type" in data) {
+        handleNextStep(data as ControlledResponse);
+      } else if ((data as { message?: string })?.message) {
+        const endMessage = (data as { message?: string })?.message || "Conversation ended.";
+        setIsControlledEnded(true);
+        setControlledEndMessage(endMessage);
+      }
+    } catch (e) {
+      toast.error("Error sending request: " + (e as Error).message);
+    } finally {
+      setIsControlledLoading(false);
     }
-    else
-      await generalizedFunctionToGetNextNode({ option: option.optionId });
-  }
+  };
+
+  const generalizedFunctionToGetNextNode = async (GivenData: { option?: string; userInput?: string, optionIntent?: string }) => {
+    const inputValue = GivenData.option || GivenData.userInput || "";
+    if (inputValue.trim().length > 0) {
+      setControlledMessages((prev) => [
+        ...prev,
+        {
+          id: `u-${new Date().getTime()}`,
+          role: "user",
+          content: GivenData.optionIntent || inputValue,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+    }
+    await sendControlledRequest({ input: GivenData.option || GivenData.userInput });
+  };
+
+  const goBackOrEnd = async (option: ControlledOption) => {
+    if (option.optionId === "GO_BACK") {
+      setControlledMessages((prev) => [
+        ...prev,
+        {
+          id: `u-${new Date().getTime()}`,
+          role: "user",
+          content: option.intent || "Go Back",
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+      await sendControlledRequest({ GO_BACK: true });
+      return;
+    }
+    if (option.optionId === "END_CHAT") {
+      setControlledMessages((prev) => [
+        ...prev,
+        {
+          id: `u-${new Date().getTime()}`,
+          role: "user",
+          content: option.intent || "End Chat",
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+      await sendControlledRequest({ END_CHAT: true });
+    }
+  };
+
+  const ActionOnClickOfOptions = async (option: ControlledOption) => {
+    if (option.optionId === "GO_BACK" || option.optionId === "END_CHAT") {
+      await goBackOrEnd(option);
+      return;
+    }
+
+    await generalizedFunctionToGetNextNode({ option: option.optionId, optionIntent: option.intent });
+  };
 
   const handleControlledInputSubmit = async()=>{
     console.log("Submitting user input for controlled flow:", controlledInput.current?.value);
-    await generalizedFunctionToGetNextNode({ userInput: controlledInput.current?.value || "" });
+    const value = controlledInput.current?.value || "";
+    if (controlledInput.current) {
+      controlledInput.current.value = "";
+    }
+    await generalizedFunctionToGetNextNode({ userInput: value });
     setShowInputForControlled(false);
   }
 
@@ -549,7 +627,24 @@ const PlaygroundPage = () => {
                   </span>
                 </div>
               ))}
+              {isControlledLoading && (
+                <div className="flex items-start">
+                  <div className="bg-muted text-foreground rounded-2xl px-4 py-2 text-sm font-inter shadow-sm">
+                    <span className="inline-flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full bg-current animate-bounce [animation-delay:-0.2s]" />
+                      <span className="h-2 w-2 rounded-full bg-current animate-bounce [animation-delay:-0.1s]" />
+                      <span className="h-2 w-2 rounded-full bg-current animate-bounce" />
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {isControlledEnded && controlledEndMessage && (
+              <div className="rounded-xl border border-border/70 bg-muted/40 p-4 text-center text-sm text-muted-foreground">
+                {controlledEndMessage}
+              </div>
+            )}
 
             {showInputForControlled && (
               <div className="space-y-3">
@@ -572,6 +667,7 @@ const PlaygroundPage = () => {
                 <Button
                   onClick={handleControlledInputSubmit}
                   className="w-full md:w-auto"
+                  disabled={isControlledLoading || isControlledEnded}
                 >
                   Submit Input
                 </Button>
@@ -586,6 +682,7 @@ const PlaygroundPage = () => {
                     variant="outline"
                     className="justify-start"
                     onClick={() => ActionOnClickOfOptions(option)}
+                    disabled={isControlledLoading || isControlledEnded}
                   >
                     {option.intent}
                   </Button>
@@ -598,6 +695,7 @@ const PlaygroundPage = () => {
                 <Button
                   onClick={startConversation}
                   className="w-full md:w-auto cursor-pointer"
+                  disabled={isControlledLoading}
                 >
                   Start Conversation
                 </Button>
