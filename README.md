@@ -324,30 +324,4 @@ We welcome contributions! Please follow these steps:
 
 ### Code style  
 
-* **Linting** – `npm run lint` (ESLint with the Next.js preset).  
-* **Formatting** – `npm run format` (Prettier).  
-* **Commit messages** – Follow the Conventional Commits style (`feat:`, `fix:`, `chore:`, etc.).  
-
----  
-
-## Deployment  
-
-### Vercel (recommended)
-
-1. Connect the repository to Vercel.  
-2. Add the environment variables from `.env.example` in the Vercel dashboard.  
-3. Vercel will automatically run `npm run build` and deploy the output.
-
-### Docker  
-
-```bash
-# Build the image
-docker build -t nova-bot-studio:latest .
-
-# Run the container
-docker run -p 3000:3000 nova-bot-studio:latest
-```
-
----  
-
-## License & Credits
+* **Linting** – `npm run lint` (
