@@ -20,7 +20,7 @@ The UI runs client‑side for a snappy experience, while a separate backend serv
 
 > **Target audience** – product managers, marketers, community managers, and developers who need a fast way to launch conversational agents without maintaining infrastructure.
 
-**Current version:** `v0.2.2` (development)
+**Current version:** `v0.2.3` (development)
 
 ---  
 
@@ -29,23 +29,24 @@ The UI runs client‑side for a snappy experience, while a separate backend serv
 | Category | Feature | Status |
 |----------|---------|--------|
 | **Bot Builder** | Visual flow editor with pre‑built templates | ✅ Stable |
-| | AI response generation (OpenAI / Claude integration) | 🟡 Beta |
+| | AI response generation (OpenAI / Claude integration) | ✅ Stable |
 | **Integrations** | Telegram, Discord, Instagram, WhatsApp | ✅ Stable |
 | | Custom webhook (any HTTP endpoint) | ✅ Stable |
 | **Dashboard** | Real‑time bot statistics (messages, uptime, active bots) | ✅ Stable |
-| | Multi‑tenant user management (role‑based) | 🟡 Beta |
+| | Multi‑tenant user management (role‑based) | ✅ Stable |
 | **Theming** | Dark / Light mode powered by `next-themes` | ✅ Stable |
 | **Notifications** | Toast notifications via `sonner` | ✅ Stable |
 | **Animations** | UI transitions with `radix-ui` and `tw-animate-css` | ✅ Stable |
-| **3D Preview** | Interactive 3‑D bot avatar using `three` | 🟡 Experimental |
+| **3D Preview** | Interactive 3‑D bot avatar using `three` | 🟡 Beta |
 | **Export / Import** | JSON export/import of bot configurations | ✅ Stable |
 | **API** | REST endpoints for auth, bot CRUD, analytics (backend) | ✅ Stable |
 | **Bot Config Editor** | Full‑screen “Edit Bot Config – Website FreeStyle” UI for per‑bot HTML/CSS/JS customization | ✅ Stable |
 | **Deployment** | One‑click Vercel deployment & Docker support | ✅ Stable |
 | **Analytics** | Built‑in usage analytics visualised in the dashboard | ✅ Stable |
-| **Internationalisation** | Basic i18n support for UI strings | 🟡 Beta |
+| **Internationalisation** | UI strings translated via `next-i18next` | ✅ Stable |
 | **API Keys Management** | Centralised UI for managing platform‑specific API keys (React Suspense lazy loading) | ✅ Stable |
-| **Playground** | Private sandbox page for rapid UI prototyping and testing new components | 🟡 Experimental |
+| **Playground** | Private sandbox page for rapid UI prototyping and testing new components | ✅ Stable |
+| **Security** | Session‑based auth, CSRF protection, rate‑limited endpoints | ✅ Stable |
 
 ---  
 
@@ -63,6 +64,7 @@ The UI runs client‑side for a snappy experience, while a separate backend serv
 | **3D** | `three` | Optional 3‑D bot preview |
 | **Utilities** | `clsx`, `class-variance-authority`, `dotenv` | Class handling & env loading |
 | **Email** | `resend` | Transactional email (password reset, invites) |
+| **Analytics** | `posthog`, custom `analytics/` helpers | User‑behaviour tracking |
 | **Testing / Linting** | `eslint`, `eslint-config-next`, `prettier` | Code quality enforcement |
 | **Build & Deploy** | `next build`, Vercel, Docker | Optimized production bundles & containerisation |
 
@@ -93,11 +95,12 @@ src/
 │  │   └─ Footer.tsx
 │  └─ page.tsx       ← Root page (redirects based on auth)
 ├─ components/
-│  └─ ui/            ← Re‑usable UI primitives (Button, Card, Spinner, …)
+│  ├─ ui/            ← Re‑usable UI primitives (Button, Card, Spinner, …)
+│  └─ FAQItemClient.tsx ← Client‑side FAQ accordion component
 ├─ lib/
 │  ├─ Store/         ← Zustand stores (auth, bot data)
 │  ├─ Types/         ← TypeScript interfaces
-│  ├─ analytics/     ← Analytics helpers
+│  ├─ analytics/     ← Analytics helpers (PostHog wrapper, event utils)
 │  ├─ posthog.ts
 │  └─ utils.ts       ← API wrappers, formatters, misc helpers
 └─ proxy.ts          ← Optional API‑proxy for server‑side requests
@@ -109,7 +112,7 @@ src/
 
 ---  
 
-## Installation  
+## Getting Started  
 
 ### Prerequisites  
 
@@ -123,7 +126,7 @@ src/
 
 A running **backend API** that implements authentication, bot CRUD and analytics is required. Supply its URL via `NEXT_PUBLIC_API_BASE_URL`.
 
-### Steps  
+### Installation  
 
 ```bash
 # 1️⃣ Clone the repository
@@ -150,6 +153,7 @@ NEXT_PUBLIC_API_BASE_URL=https://api.yourdomain.com
 
 # Private – used only by server‑side code (if any)
 RESEND_API_KEY=your_resend_api_key
+POSTHOG_API_KEY=your_posthog_key   # optional analytics
 ```
 
 > **Note:** Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. All other variables remain server‑only.
@@ -235,7 +239,7 @@ import { Spinner } from "@/components/ui/spinner";
 const PlatformCard = ({ platform }) => (
   <Card className="cursor-pointer hover:shadow-lg transition-shadow">
     <CardHeader>
-      <platform.icon className={platform.color + " text-2xl"} />
+      <platform.icon className={`${platform.color} text-2xl`} />
       <CardTitle>{platform.name}</CardTitle>
       <CardDescription>{platform.description}</CardDescription>
     </CardHeader>
@@ -288,6 +292,7 @@ Navigate to `/home/Playground` after login to view the page. Replace the placeho
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | `POST` | `/api/auth/login` | Authenticate a user and set an HTTP‑only session cookie. | ❌ |
+| `POST` | `/api/auth/logout` | Destroy the session cookie. | ✅ |
 | `GET` | `/api/bots` | Retrieve a list of bots owned by the authenticated user. | ✅ |
 | `POST` | `/api/bots` | Create a new bot (name, platform, template). | ✅ |
 | `GET` | `/api/bots/:id` | Get detailed configuration for a specific bot. | ✅ |
@@ -295,56 +300,28 @@ Navigate to `/home/Playground` after login to view the page. Replace the placeho
 | `DELETE` | `/api/bots/:id` | Delete a bot. | ✅ |
 | `GET` | `/api/analytics/:botId` | Fetch usage statistics for a bot (messages, uptime, etc.). | ✅ |
 | `GET` | `/api/platforms` | List available messaging platforms for API‑key management. | ✅ |
+| `GET` | `/api/i18n/:locale` | Retrieve UI translation strings for the requested locale. | ✅ |
 
 *All authenticated requests must include the session cookie (`credentials: "include"`).*
 
 ---  
 
-## Contributing  
+## Development  
 
-We welcome contributions! Please follow these steps:
+### Setting up the development environment  
 
-1. **Fork** the repository and clone your fork.  
-2. **Create a feature branch** (`git checkout -b feat/your-feature`).  
-3. **Install dependencies** and set up the environment as described in the Installation section.  
-4. **Make your changes** – ensure they pass linting and any existing tests.  
-5. **Write tests** for new functionality when applicable.  
-6. **Commit** using Conventional Commits (e.g., `feat: add playground demo`).  
-7. **Push** to your fork and open a Pull Request against `main`.  
+1. Follow the **Installation** steps above.  
+2. Run `npm run dev` and open <http://localhost:3000>.  
+3. Use the **Playground** page to experiment with new UI components without affecting production routes.  
 
-### Development workflow  
+### Testing  
 
-| Command | Purpose |
-|---------|---------|
-| `npm run dev` | Start local dev server with hot‑reload. |
-| `npm run lint` | Run ESLint. |
-| `npm run format` | Run Prettier. |
-| `npm run test` | Execute test suite. |
-| `npm run build` | Build production assets. |
+```bash
+npm run test
+```
+
+> **Note:** The repository currently contains placeholder test scripts. Add Jest, React Testing Library, or Playwright tests as you develop new features.
 
 ### Code style  
 
-* **Linting** – `npm run lint` uses the **ESLint** configuration from `eslint.config.mjs`.  
-* **Formatting** – `npm run format` runs **Prettier** with the project's `.prettierrc`.  
-* **Type safety** – All new code must be written in **TypeScript** and pass `tsc --noEmit`.  
-
----  
-
-## License & Credits  
-
-**License:** MIT © 2024 GURUDAS‑DEV. See the [LICENSE](LICENSE) file for details.
-
-### Contributors  
-
-| Author | GitHub |
-|--------|--------|
-| GURUDAS‑DEV | [@GURUDAS-DEV](https://github.com/GURUDAS-DEV) |
-| (Add additional contributors as PRs are merged) |
-
-### Acknowledgments  
-
-* **Next.js** – for the powerful React framework.  
-* **TailwindCSS** – for rapid UI development.  
-* **Zustand** – for lightweight state management.  
-* **Radix UI**, **lucide-react**, **react-icons** – for accessible UI primitives and icons.  
-* **Resend**, **PostHog**, **
+* **Linting
