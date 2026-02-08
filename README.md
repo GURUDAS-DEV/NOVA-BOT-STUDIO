@@ -41,6 +41,7 @@ The UI runs client‑side for a snappy experience, while a separate backend serv
 | **Export / Import** | JSON export/import of bot configurations | ✅ Stable |
 | **API** | REST endpoints for auth, bot CRUD, analytics (backend) | ✅ Stable |
 | **Bot Config Editor** | Full‑screen “Edit Bot Config – Website FreeStyle” UI for per‑bot HTML/CSS/JS customization | ✅ Stable |
+| **Bot Config Editor – Controlled Style** | Dedicated page for editing **Controlled‑Style** bot flows (node‑based FSM with API‑driven options) | ✅ Stable |
 | **Deployment** | One‑click Vercel deployment & Docker support | ✅ Stable |
 | **Analytics** | Built‑in usage analytics visualised in the dashboard | ✅ Stable |
 | **Internationalisation** | UI strings translated via `next-i18next` | ✅ Stable |
@@ -85,12 +86,17 @@ src/
 │  │   │   │   └─ page.tsx    ← Sandbox for rapid UI experiments
 │  │   │   ├─ API_Keys/
 │  │   │   │   └─ page.tsx    ← API keys management (Suspense‑based)
-│  │   │   └─ Edit‑Bot‑Config/
-│  │   │       └─ Website/
-│  │   │           └─ FreeStyle/
-│  │   │               └─ (id)/
-│  │   │                   └─ page.tsx   ← “Edit Bot Config – Website FreeStyle”
-│  │   └─ …                    ← Other private sections (create, manage, stats)
+│  │   │   ├─ CreateBots/
+│  │   │   │   └─ Website/
+│  │   │   │       └─ ControlledStyle/
+│  │   │   │           └─ [id]/page.tsx   ← “Create Bot – Controlled Style”
+│  │   │   ├─ Edit‑Bot‑Config/
+│  │   │   │   └─ Website/
+│  │   │   │       ├─ FreeStyle/
+│  │   │   │       │   └─ (id)/page.tsx   ← “Edit Bot Config – Website FreeStyle”
+│  │   │   │       └─ Controlled_Style/
+│  │   │   │           └─ (id)/page.tsx   ← “Edit Bot Config – Controlled Style”
+│  │   └─ …                    ← Other private sections (manage, stats)
 │  ├─ (public)       ← Public‑facing pages (landing, FAQ, pricing)
 │  │   └─ Footer.tsx
 │  └─ page.tsx       ← Root page (redirects based on auth)
@@ -164,7 +170,9 @@ POSTHOG_API_KEY=your_posthog_key   # optional analytics
 npm run dev
 ```
 
-Open <http://localhost:3000>. You should see the public landing page. After logging in, you’ll be redirected to the dashboard. Navigate to **Playground** (`/home/Playground`) to view the sandbox page.
+Open <http://localhost:3000>. You should see the public landing page. After logging in, you’ll be redirected to the dashboard.  
+
+*To test the new **Controlled‑Style** editor:* navigate to `/home/Edit-Bot-Config/Website/Controlled_Style/<bot-id>` (replace `<bot-id>` with an existing bot ID). The page now supports node‑based FSM editing, dynamic option loading from APIs, and back/end controls.
 
 ---  
 
@@ -180,6 +188,60 @@ Open <http://localhost:3000>. You should see the public landing page. After logg
 | `npm run lint` | Lints the codebase using ESLint (Next.js preset). |
 | `npm run test` | Placeholder – add Jest/Playwright tests here. |
 | `npm run format` | Runs Prettier to format all files. |
+
+### Example: Editing a Controlled‑Style Bot  
+
+```tsx
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
+export default function ControlledBotEditor() {
+  const { id: botId } = useParams() as { id: string };
+  const [bot, setBot] = useState<any>(null);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bots/${botId}`, {
+      credentials: "include",
+    })
+      .then((r) => r.json())
+      .then(setBot)
+      .catch(() => toast.error("Failed to load bot"));
+  }, [botId]);
+
+  const handleSave = async () => {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bots/${botId}`,
+      {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bot),
+      }
+    );
+    if (res.ok) toast.success("Bot configuration saved");
+    else toast.error("Save failed");
+  };
+
+  if (!bot) return <div className="p-8">Loading…</div>;
+
+  return (
+    <div className="p-8">
+      <h1 className="text-2xl font-bold mb-4">
+        Edit Controlled‑Style Bot: {bot.name}
+      </h1>
+
+      {/* Render your node editor here – omitted for brevity */}
+      {/* <ControlledNodeEditor bot={bot} onChange={setBot} /> */}
+
+      <Button className="mt-6" onClick={handleSave}>
+        Save Changes
+      </Button>
+    </div>
+  );
+}
+```
 
 ### Example: Creating a bot (client side)
 
@@ -207,7 +269,6 @@ export const CreateBot = () => {
     );
 
     if (res.ok) {
-      // Refresh UI or navigate to the bot detail page
       window.location.href = "/home/manage";
     } else {
       const err = await res.json();
@@ -222,43 +283,6 @@ export const CreateBot = () => {
     </Button>
   );
 };
-```
-
-### Example: Managing API keys (Suspense‑based page)
-
-```tsx
-import { Suspense } from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
-
-const PlatformCard = ({ platform }) => (
-  <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-    <CardHeader>
-      <platform.icon className={`${platform.color} text-2xl`} />
-      <CardTitle>{platform.name}</CardTitle>
-      <CardDescription>{platform.description}</CardDescription>
-    </CardHeader>
-  </Card>
-);
-
-export default function APIKeysPage() {
-  return (
-    <Suspense fallback={<Spinner className="mx-auto my-8" />}>
-      {/* Platform data is fetched inside the component; while loading the spinner shows */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* Example platform list – actual data comes from the backend */}
-        {platforms.map((p) => (
-          <PlatformCard key={p.id} platform={p} />
-        ))}
-      </div>
-    </Suspense>
-  );
-}
 ```
 
 ### Example: Using the **Playground** sandbox
@@ -296,7 +320,7 @@ Navigate to `/home/Playground` after login to view the page. Replace the placeho
 | `GET` | `/api/bots` | Retrieve a list of bots owned by the authenticated user. | ✅ |
 | `POST` | `/api/bots` | Create a new bot (name, platform, template). | ✅ |
 | `GET` | `/api/bots/:id` | Get detailed configuration for a specific bot. | ✅ |
-| `PATCH` | `/api/bots/:id` | Update bot configuration (including FreeStyle HTML/CSS/JS). | ✅ |
+| `PATCH` | `/api/bots/:id` | Update bot configuration (including FreeStyle HTML/CSS/JS **and Controlled‑Style FSM**). | ✅ |
 | `DELETE` | `/api/bots/:id` | Delete a bot. | ✅ |
 | `GET` | `/api/analytics/:botId` | Fetch usage statistics for a bot (messages, uptime, etc.). | ✅ |
 | `GET` | `/api/platforms` | List available messaging platforms for API‑key management. | ✅ |
@@ -311,17 +335,4 @@ Navigate to `/home/Playground` after login to view the page. Replace the placeho
 ### Setting up the development environment  
 
 1. Follow the **Installation** steps above.  
-2. Run `npm run dev` and open <http://localhost:3000>.  
-3. Use the **Playground** page to experiment with new UI components without affecting production routes.  
-
-### Testing  
-
-```bash
-npm run test
-```
-
-> **Note:** The repository currently contains placeholder test scripts. Add Jest, React Testing Library, or Playwright tests as you develop new features.
-
-### Code style  
-
-* **Linting
+2. Run `npm run dev` and open <http://localhost:300
