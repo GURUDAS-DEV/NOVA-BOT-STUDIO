@@ -184,6 +184,7 @@ export default function ControlledBotBuilder() {
           });
         }
       });
+      console.log("Final bot configuration to submit:", bot);
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/setupWebsiteControlledStyleBotConfig`, {
         method : "POST",
