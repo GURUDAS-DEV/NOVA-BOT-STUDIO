@@ -16,7 +16,7 @@ Nova Bot Studio is a modern SaaS‑style dashboard built with **Next.js 16** a
 * **Connect** to popular messaging platforms – Telegram, Discord, Instagram, WhatsApp – or a custom webhook.  
 * **Manage** bots, view real‑time statistics and control access from a unified admin panel.  
 
-The platform runs **client‑side rendered** for a snappy UI, while a separate backend provides authentication, bot orchestration and analytics via a REST API.
+The UI runs client‑side for a snappy experience, while a separate backend service provides authentication, bot orchestration and analytics via a REST API.
 
 > **Target audience** – product managers, marketers, community managers, and developers who need a fast way to launch conversational agents without maintaining infrastructure.
 
@@ -305,11 +305,11 @@ Navigate to `/home/Playground` after login to view the page. Replace the placeho
 We welcome contributions! Please follow these steps:
 
 1. **Fork** the repository and clone your fork.  
-2. **Create a feature branch** (`git checkout -b feat/playground-demo`).  
+2. **Create a feature branch** (`git checkout -b feat/your-feature`).  
 3. **Install dependencies** and set up the environment as described in the Installation section.  
 4. **Make your changes** – ensure they pass linting and any existing tests.  
 5. **Write tests** for new functionality when applicable.  
-6. **Commit** using Conventional Commits (`feat: add playground demo`).  
+6. **Commit** using Conventional Commits (e.g., `feat: add playground demo`).  
 7. **Push** to your fork and open a Pull Request against `main`.  
 
 ### Development workflow  
@@ -324,4 +324,27 @@ We welcome contributions! Please follow these steps:
 
 ### Code style  
 
-* **Linting** – `npm run lint` (
+* **Linting** – `npm run lint` uses the **ESLint** configuration from `eslint.config.mjs`.  
+* **Formatting** – `npm run format` runs **Prettier** with the project's `.prettierrc`.  
+* **Type safety** – All new code must be written in **TypeScript** and pass `tsc --noEmit`.  
+
+---  
+
+## License & Credits  
+
+**License:** MIT © 2024 GURUDAS‑DEV. See the [LICENSE](LICENSE) file for details.
+
+### Contributors  
+
+| Author | GitHub |
+|--------|--------|
+| GURUDAS‑DEV | [@GURUDAS-DEV](https://github.com/GURUDAS-DEV) |
+| (Add additional contributors as PRs are merged) |
+
+### Acknowledgments  
+
+* **Next.js** – for the powerful React framework.  
+* **TailwindCSS** – for rapid UI development.  
+* **Zustand** – for lightweight state management.  
+* **Radix UI**, **lucide-react**, **react-icons** – for accessible UI primitives and icons.  
+* **Resend**, **PostHog**, **
