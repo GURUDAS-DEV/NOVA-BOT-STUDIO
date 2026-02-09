@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Plus, Trash2, ChevronRight, ArrowLeft, RefreshCw, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "sonner";
@@ -185,15 +185,17 @@ const normalizeBackendBot = (raw: BackendBot): Bot => {
 };
 
 export default function EditControlledBotConfig() {
+  const pathname = usePathname()
   const searchParams = useSearchParams();
-  const botIdFromQuery = useMemo(() => searchParams?.get("botId") || "", [searchParams]);
-  const [botIdInput, setBotIdInput] = useState(botIdFromQuery);
-  const [bot, setBot] = useState<Bot>(createEmptyBot(botIdFromQuery));
+  const [botIdFromParams, setBotIdFromParams] = useState(searchParams.get("id") || "");
+  const [botIdInput, setBotIdInput] = useState(botIdFromParams);
+  const [bot, setBot] = useState<Bot>(createEmptyBot(botIdFromParams));
   const [selectedNodeId, setSelectedNodeId] = useState<string>("node-1");
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
+  const [botNotFound, setBotNotFound] = useState(false);
+  
   const selectedNode = bot.nodes.find((n) => n.id === selectedNodeId);
   const selectedOption = selectedNode?.options.find((o) => o.id === selectedOptionId);
 
@@ -294,11 +296,13 @@ export default function EditControlledBotConfig() {
 
   const loadBot = async (botId: string) => {
     if (!botId) {
-      toast.error("Enter a bot ID to load");
+      setBotNotFound(true);
+      toast.error("Bot ID is missing");
       return;
     }
 
     setIsLoading(true);
+    setBotNotFound(false);
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/botConfig/getControlledBotConfig/${botId}`,
@@ -312,14 +316,22 @@ export default function EditControlledBotConfig() {
       const data = await response.json();
       console.log("Raw bot data from server:", data);
       if (!response.ok) {
-        toast.error(data?.message || "Failed to load bot");
+        if (response.status === 404) {
+          setBotNotFound(true);
+          toast.error(data?.message || "Bot not found");
+        } else {
+          toast.error(data?.message || "Failed to load bot");
+        }
         return;
       }
 
+      setBotNotFound(false);
+
       const backendBot: BackendBot | null =
-        data?.constructedBot || data?.bot || data?.data?.bot || data?.config || null;
-      if (!backendBot) {
-        toast.error("Invalid bot data returned from server");
+        data?.data || data?.constructedBot || data?.bot || data?.data?.bot || data?.config || null;
+      if (!backendBot || !((backendBot.nodes || backendBot.node) && (backendBot.nodes || backendBot.node)?.length)) {
+        setBotNotFound(true);
+        toast.error("Bot data is missing or invalid");
         return;
       }
 
@@ -368,10 +380,59 @@ export default function EditControlledBotConfig() {
   };
 
   useEffect(() => {
-    if (botIdFromQuery) {
-      loadBot(botIdFromQuery);
-    }
-  }, [botIdFromQuery]);
+    console.log("Bot ID from URL params:", botIdFromParams);
+      loadBot(botIdFromParams);
+  }, [botIdFromParams]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen w-full bg-stone-100 dark:bg-stone-900 text-stone-900 dark:text-white font-inter flex items-center justify-center px-6">
+        <div className="w-full max-w-2xl rounded-2xl border border-stone-200 dark:border-stone-800 bg-white/90 dark:bg-stone-900/70 backdrop-blur p-8 shadow-xl">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-full border border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+              <RefreshCw className="h-6 w-6 text-pink-600 dark:text-pink-400 animate-spin" />
+            </div>
+            <div>
+              <h2 className="text-lg font-outfit font-bold">Loading bot configuration</h2>
+              <p className="text-sm text-stone-600 dark:text-stone-300">Please wait while we fetch the bot details.</p>
+            </div>
+          </div>
+          <div className="mt-5 h-2 w-full rounded-full bg-stone-200 dark:bg-stone-800 overflow-hidden">
+            <div className="h-full w-2/3 bg-linear-to-r from-pink-500 to-purple-600 animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (botNotFound) {
+    return (
+      <div className="min-h-screen w-full bg-stone-100 dark:bg-stone-900 text-stone-900 dark:text-white font-inter flex items-center justify-center px-6">
+        <div className="w-full max-w-2xl rounded-2xl border border-stone-200 dark:border-stone-800 bg-white/90 dark:bg-stone-900/70 backdrop-blur p-8 shadow-xl">
+          <h2 className="text-xl font-outfit font-bold">Bot not found</h2>
+          <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
+            The bot ID in the URL is invalid or no longer exists. Please check the link and try again.
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <Button
+              onClick={() => loadBot(botIdInput)}
+              className="bg-linear-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white"
+            >
+              Retry
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => window.history.back()}
+              className="text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800"
+            >
+              Go back
+            </Button>
+          </div>
+          <p className="mt-4 text-xs text-stone-500 dark:text-stone-400">Bot ID: {botIdInput || "Not provided"}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-stone-100 dark:bg-stone-900 text-stone-900 dark:text-white font-inter">
