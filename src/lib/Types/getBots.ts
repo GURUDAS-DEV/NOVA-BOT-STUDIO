@@ -20,5 +20,5 @@ export interface bot{
     purpose: "chatbot" | "search" | "automation";
     messages: number;
     deleted_at?: Date;
-    type?: "FREESTYlE" | "CONTROLLED";
+    type?: "FREESTYLE" | "CONTROLLED";
 }
