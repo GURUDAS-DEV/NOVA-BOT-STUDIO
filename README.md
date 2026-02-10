@@ -40,8 +40,9 @@ The UI runs client‑side for a snappy experience, while a separate backend serv
 | **3D Preview** | Interactive 3‑D bot avatar using `three` | 🟡 Beta |
 | **Export / Import** | JSON export/import of bot configurations | ✅ Stable |
 | **API** | REST endpoints for auth, bot CRUD, analytics (backend) | ✅ Stable |
-| **Bot Config Editor** | Full‑screen “Edit Bot Config – Website FreeStyle” UI for per‑bot HTML/CSS/JS customization | ✅ Stable |
-| **Bot Config Editor – Controlled Style** | Dedicated page for editing **Controlled‑Style** bot flows (node‑based FSM with API‑driven options) | ✅ Stable |
+| **Bot Config Editor – FreeStyle** | Full‑screen HTML/CSS/JS customization | ✅ Stable |
+| **Bot Config Editor – Controlled Style** | Node‑based FSM editor with API‑driven options | ✅ Stable |
+| **Improved Loading Experience** | Graceful loading spinners & error handling for Controlled‑Style editor | ✅ Stable |
 | **Deployment** | One‑click Vercel deployment & Docker support | ✅ Stable |
 | **Analytics** | Built‑in usage analytics visualised in the dashboard | ✅ Stable |
 | **Internationalisation** | UI strings translated via `next-i18next` | ✅ Stable |
@@ -172,7 +173,7 @@ npm run dev
 
 Open <http://localhost:3000>. You should see the public landing page. After logging in, you’ll be redirected to the dashboard.  
 
-*To test the new **Controlled‑Style** editor:* navigate to `/home/Edit-Bot-Config/Website/Controlled_Style/<bot-id>` (replace `<bot-id>` with an existing bot ID). The page now supports node‑based FSM editing, dynamic option loading from APIs, and back/end controls.
+*To test the new **Controlled‑Style** editor:* navigate to `/home/Edit-Bot-Config/Website/Controlled_Style/<bot-id>` (replace `<bot-id>` with an existing bot ID). The page now shows a loading spinner while the bot configuration is fetched and displays friendly error toasts if the request fails.
 
 ---  
 
@@ -195,19 +196,25 @@ Open <http://localhost:3000>. You should see the public landing page. After logg
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function ControlledBotEditor() {
   const { id: botId } = useParams() as { id: string };
   const [bot, setBot] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bots/${botId}`, {
       credentials: "include",
     })
-      .then((r) => r.json())
-      .then(setBot)
-      .catch(() => toast.error("Failed to load bot"));
+      .then((r) => {
+        if (!r.ok) throw new Error("Network response was not ok");
+        return r.json();
+      })
+      .then((data) => setBot(data))
+      .catch(() => toast.error("Failed to load bot configuration"))
+      .finally(() => setLoading(false));
   }, [botId]);
 
   const handleSave = async () => {
@@ -224,12 +231,18 @@ export default function ControlledBotEditor() {
     else toast.error("Save failed");
   };
 
-  if (!bot) return <div className="p-8">Loading…</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Spinner className="w-12 h-12" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">
-        Edit Controlled‑Style Bot: {bot.name}
+        Edit Controlled‑Style Bot: {bot?.name}
       </h1>
 
       {/* Render your node editor here – omitted for brevity */}
@@ -238,10 +251,17 @@ export default function ControlledBotEditor() {
       <Button className="mt-6" onClick={handleSave}>
         Save Changes
       </Button>
+
+      <Toaster position="bottom-right" />
     </div>
   );
 }
 ```
+
+*Key improvements*:
+
+* **Loading spinner** while the bot data is being fetched.  
+* **Error toast** if the fetch fails, preventing a blank screen.  
 
 ### Example: Creating a bot (client side)
 
@@ -321,18 +341,4 @@ Navigate to `/home/Playground` after login to view the page. Replace the placeho
 | `POST` | `/api/bots` | Create a new bot (name, platform, template). | ✅ |
 | `GET` | `/api/bots/:id` | Get detailed configuration for a specific bot. | ✅ |
 | `PATCH` | `/api/bots/:id` | Update bot configuration (including FreeStyle HTML/CSS/JS **and Controlled‑Style FSM**). | ✅ |
-| `DELETE` | `/api/bots/:id` | Delete a bot. | ✅ |
-| `GET` | `/api/analytics/:botId` | Fetch usage statistics for a bot (messages, uptime, etc.). | ✅ |
-| `GET` | `/api/platforms` | List available messaging platforms for API‑key management. | ✅ |
-| `GET` | `/api/i18n/:locale` | Retrieve UI translation strings for the requested locale. | ✅ |
-
-*All authenticated requests must include the session cookie (`credentials: "include"`).*
-
----  
-
-## Development  
-
-### Setting up the development environment  
-
-1. Follow the **Installation** steps above.  
-2. Run `npm run dev` and open <http://localhost:300
+| `DELETE` | `/api/bots/:id` | Delete a bot.
