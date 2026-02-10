@@ -20,7 +20,7 @@ The UI runs client‑side for a snappy experience, while a separate backend serv
 
 > **Target audience** – product managers, marketers, community managers, and developers who need a fast way to launch conversational agents without maintaining infrastructure.
 
-**Current version:** `v0.2.3` (development)
+**Current version:** `v0.2.4` (development)
 
 ---  
 
@@ -340,5 +340,4 @@ Navigate to `/home/Playground` after login to view the page. Replace the placeho
 | `GET` | `/api/bots` | Retrieve a list of bots owned by the authenticated user. | ✅ |
 | `POST` | `/api/bots` | Create a new bot (name, platform, template). | ✅ |
 | `GET` | `/api/bots/:id` | Get detailed configuration for a specific bot. | ✅ |
-| `PATCH` | `/api/bots/:id` | Update bot configuration (including FreeStyle HTML/CSS/JS **and Controlled‑Style FSM**). | ✅ |
-| `DELETE` | `/api/bots/:id` | Delete a bot.
+| `PATCH` | `/api
