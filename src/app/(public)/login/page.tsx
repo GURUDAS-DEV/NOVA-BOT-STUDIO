@@ -139,7 +139,10 @@ const LoginPage = () => {
   };
 
 const handleGoogleLogin = async() => {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/googleOAuth`);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/googleOAuth`, {
+      method: "GET",
+      credentials: "include",
+    });
     const data = await response.json();
     if(response.ok){
       window.location.href = data.url;
