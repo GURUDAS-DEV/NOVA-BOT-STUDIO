@@ -20,7 +20,7 @@ The UI runs client‑side for a snappy experience, while a separate backend serv
 
 > **Target audience** – product managers, marketers, community managers, and developers who need a fast way to launch conversational agents without maintaining infrastructure.
 
-**Current version:** `v0.2.4` (development)
+**Current version:** `v0.2.5` (development)
 
 ---  
 
@@ -265,76 +265,4 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export const CreateBot = () => {
-  const [loading, setLoading] = useState(false);
-
-  const handleCreate = async () => {
-    setLoading(true);
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bots`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: "My First Bot",
-          platform: "telegram",
-          template: "customer-support",
-        }),
-      }
-    );
-
-    if (res.ok) {
-      window.location.href = "/home/manage";
-    } else {
-      const err = await res.json();
-      console.error("Bot creation failed:", err);
-    }
-    setLoading(false);
-  };
-
-  return (
-    <Button onClick={handleCreate} disabled={loading}>
-      {loading ? "Creating…" : "Create Bot"}
-    </Button>
-  );
-};
-```
-
-### Example: Using the **Playground** sandbox
-
-```tsx
-// src/app/(private)/home/Playground/page.tsx
-export default function Playground() {
-  return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Playground</h1>
-      <p className="text-gray-600">
-        This area is reserved for rapid UI prototyping. Add your experimental
-        components here and they will be isolated from the production dashboard.
-      </p>
-
-      {/* Example: render a temporary component */}
-      {/* <MyExperimentalWidget /> */}
-    </div>
-  );
-}
-```
-
-Navigate to `/home/Playground` after login to view the page. Replace the placeholder markup with any component you wish to test.
-
----  
-
-## API Documentation  
-
-> The front‑end communicates with a separate backend service. The backend’s OpenAPI spec lives in its own repository. Below are the most‑used endpoints from the front‑end perspective.
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| `POST` | `/api/auth/login` | Authenticate a user and set an HTTP‑only session cookie. | ❌ |
-| `POST` | `/api/auth/logout` | Destroy the session cookie. | ✅ |
-| `GET` | `/api/bots` | Retrieve a list of bots owned by the authenticated user. | ✅ |
-| `POST` | `/api/bots` | Create a new bot (name, platform, template). | ✅ |
-| `GET` | `/api/bots/:id` | Get detailed configuration for a specific bot. | ✅ |
-| `PATCH` | `/api/bots/:id` | Update bot configuration (name, flow, settings). | ✅ |
-| `DELETE` | `/api/bots/:id` | Delete a bot permanently. | ✅ |
-| `GET` | `/api/analytics/:botId` | Fetch usage statistics for a
+  const
