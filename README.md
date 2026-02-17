@@ -171,7 +171,7 @@ POSTHOG_API_KEY=your_posthog_key   # optional analytics
 npm run dev
 ```
 
-Open <http://localhost:3000>. You should see the public landing page. After logging in, you’ll be redirected to the dashboard.  
+Open <http://localhost:3000>. You should see the public landing page. After logging in, you’ll be redirected to the dashboard.
 
 *To test the new **Controlled‑Style** editor:* navigate to `/home/Edit-Bot-Config/Website/Controlled_Style/<bot-id>` (replace `<bot-id>` with an existing bot ID). The page now shows a loading spinner while the bot configuration is fetched and displays friendly error toasts if the request fails.
 
@@ -258,12 +258,7 @@ export default function ControlledBotEditor() {
 }
 ```
 
-*Key improvements*:
-
-* **Loading spinner** while the bot data is being fetched.  
-* **Error toast** if the fetch fails, preventing a blank screen.  
-
-### Example: Creating a bot (client side)
+### Example: Creating a Bot (client side)
 
 ```tsx
 import { useState } from "react";
@@ -333,11 +328,13 @@ Navigate to `/home/Playground` after login to view the page. Replace the placeho
 
 > The front‑end communicates with a separate backend service. The backend’s OpenAPI spec lives in its own repository. Below are the most‑used endpoints from the front‑end perspective.
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
 | `POST` | `/api/auth/login` | Authenticate a user and set an HTTP‑only session cookie. | ❌ |
 | `POST` | `/api/auth/logout` | Destroy the session cookie. | ✅ |
 | `GET` | `/api/bots` | Retrieve a list of bots owned by the authenticated user. | ✅ |
 | `POST` | `/api/bots` | Create a new bot (name, platform, template). | ✅ |
 | `GET` | `/api/bots/:id` | Get detailed configuration for a specific bot. | ✅ |
-| `PATCH` | `/api
+| `PATCH` | `/api/bots/:id` | Update bot configuration (name, flow, settings). | ✅ |
+| `DELETE` | `/api/bots/:id` | Delete a bot permanently. | ✅ |
+| `GET` | `/api/analytics/:botId` | Fetch usage statistics for a
