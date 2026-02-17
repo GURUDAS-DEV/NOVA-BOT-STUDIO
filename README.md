@@ -16,8 +16,6 @@ Nova Bot Studio is a modern SaaS‑style dashboard built with **Next.js 16** a
 * **Connect** to popular messaging platforms – Telegram, Discord, Instagram, WhatsApp – or a custom webhook.  
 * **Manage** bots, view real‑time statistics and control access from a unified admin panel.  
 
-The UI runs client‑side for a snappy experience, while a separate backend service provides authentication, bot orchestration and analytics via a REST API.
-
 > **Target audience** – product managers, marketers, community managers, and developers who need a fast way to launch conversational agents without maintaining infrastructure.
 
 **Current version:** `v0.2.5` (development)
@@ -258,11 +256,74 @@ export default function ControlledBotEditor() {
 }
 ```
 
-### Example: Creating a Bot (client side)
+### Playground – Testing Bot Responses (updated request body)
+
+The **Playground** page lets you experiment with a bot’s behaviour without creating a full bot configuration.  
+A recent change renamed the request payload key from `prompt` to `messages`. The API now expects an array of message objects that follow the OpenAI‑compatible schema.
 
 ```tsx
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
-export const CreateBot = () => {
-  const
+export default function Playground() {
+  const [input, setInput] = useState("");
+  const [response, setResponse] = useState("");
+
+  const callPlayground = async () => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/playground`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          // ✅ Updated request body key
+          body: JSON.stringify({
+            messages: [{ role: "user", content: input }],
+          }),
+        }
+      );
+
+      if (!res.ok) throw new Error("API error");
+      const data = await res.json();
+      setResponse(data.reply);
+    } catch (err) {
+      toast.error("Playground request failed");
+    }
+  };
+
+  return (
+    <div className="p-6">
+      <textarea
+        className="w-full p-2 border rounded"
+        rows={4}
+        placeholder="Ask your bot something..."
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+      />
+      <Button className="mt-4" onClick={callPlayground}>
+        Send to Playground
+      </Button>
+
+      {response && (
+        <div className="mt-6 p-4 bg-gray-100 rounded">
+          <strong>Bot reply:</strong>
+          <p>{response}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+> **Important:** Ensure the backend version you are running matches the frontend (`v0.2.5`). Older backend releases still expect the old `prompt` key, which will result in a `400 Bad Request`.
+
+---  
+
+## Contributing  
+
+We welcome contributions! Please follow these steps:
+
+1. **Fork** the repository and create a feature branch.  
+2. **Install** the project locally (see *
