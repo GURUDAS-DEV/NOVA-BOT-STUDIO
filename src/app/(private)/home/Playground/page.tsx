@@ -230,7 +230,7 @@ const PlaygroundPage = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${apiKey.current?.value}`,
           },
-          body: JSON.stringify({ input: inputMessage.trim() }),
+          body: JSON.stringify({ userMessage: inputMessage.trim() }),
         },
       );
 

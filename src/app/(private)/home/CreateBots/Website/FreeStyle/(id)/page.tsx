@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -57,7 +57,17 @@ interface WizardState {
   websiteType: WebsiteType;
   otherWebsiteType: string;
 
-  // Step 4
+  // Step 4 - Website Scraping
+  scrapingEnabled: boolean;
+  websiteUrl: string;
+  ownershipConfirmed: boolean;
+  permissionGranted: boolean;
+  termsRead: boolean;
+  scrapingComplete: boolean;
+  scrapedContent?: string;
+  scrapingError?: string;
+
+  // Step 5
   behaviorDescription: string;
   OwnerInformation: string;
   additionalInformation: string;
@@ -76,7 +86,7 @@ interface WizardState {
   apiTestPassed?: boolean;
 }
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 // Step 1: Bot Type Selection
 const Step1BotType = ({
@@ -288,8 +298,258 @@ const Step3WebsiteContext = ({
   );
 };
 
-// Step 4: Bot Behavior
-const Step4Behavior = ({
+// Step 4: Website Scraping
+const Step4Scraping = ({
+  scrapingEnabled,
+  websiteUrl,
+  ownershipConfirmed,
+  permissionGranted,
+  termsRead,
+  scrapingComplete,
+  scrapedContent,
+  scrapingError,
+  onScrapingEnabledChange,
+  onWebsiteUrlChange,
+  onOwnershipConfirmedChange,
+  onPermissionGrantedChange,
+  onTermsReadChange,
+  onScrapeWebsite,
+  isScraping,
+}: {
+  scrapingEnabled: boolean;
+  websiteUrl: string;
+  ownershipConfirmed: boolean;
+  permissionGranted: boolean;
+  termsRead: boolean;
+  scrapingComplete: boolean;
+  scrapedContent?: string;
+  scrapingError?: string;
+  onScrapingEnabledChange: (value: boolean) => void;
+  onWebsiteUrlChange: (value: string) => void;
+  onOwnershipConfirmedChange: (value: boolean) => void;
+  onPermissionGrantedChange: (value: boolean) => void;
+  onTermsReadChange: (value: boolean) => void;
+  onScrapeWebsite: () => Promise<void>;
+  isScraping?: boolean;
+}) => {
+  const websiteUrlRef = useRef<HTMLInputElement>(null);
+
+  const isValidUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.protocol === "http:" || urlObj.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
+  const allConfirmationsChecked =
+    ownershipConfirmed && permissionGranted && termsRead;
+  const canScrape =
+    scrapingEnabled &&
+    isValidUrl(websiteUrl) &&
+    allConfirmationsChecked &&
+    !scrapingComplete;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">
+          Website Scraping
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Optionally scrape your website to provide context for your bot
+        </p>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="scraping-enabled"
+          checked={scrapingEnabled}
+          onChange={(e) => onScrapingEnabledChange(e.target.checked)}
+          className="h-4 w-4 rounded border-gray-300 dark:border-stone-700"
+        />
+        <label
+          htmlFor="scraping-enabled"
+          className="text-sm font-medium cursor-pointer text-gray-900 dark:text-white"
+        >
+          Enable Website Scraping
+        </label>
+      </div>
+
+      {scrapingEnabled && (
+        <>
+          {/* Warning Banner */}
+          <div className="rounded-md p-4 flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+            <div className="text-amber-700 dark:text-amber-200 mt-0.5">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+            <div className="text-sm text-amber-800 dark:text-amber-100">
+              <div className="font-semibold mb-1">Important Notice</div>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Only scrape websites you own or have permission to scrape</li>
+                <li>Scraping may take a few minutes depending on website size</li>
+                <li>The scraped content will be used to train your bot</li>
+                <li>We respect robots.txt and site policies</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Website URL Input */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-900 dark:text-white">
+              Website URL
+            </label>
+            <Input
+              ref={websiteUrlRef}
+              type="url"
+              placeholder="https://www.example.com"
+              value={websiteUrl}
+              onChange={(e) => onWebsiteUrlChange(e.target.value)}
+              className="dark:bg-black bg-white dark:text-white text-black"
+              disabled={scrapingComplete}
+            />
+            {websiteUrl && !isValidUrl(websiteUrl) && (
+              <p className="text-xs text-red-600 dark:text-red-400">
+                Please enter a valid URL starting with http:// or https://
+              </p>
+            )}
+          </div>
+
+          {/* Confirmation Checkboxes */}
+          <div className="space-y-3 p-4 rounded-md bg-gray-50 dark:bg-stone-800/50 border border-gray-200 dark:border-stone-700">
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+              Required Confirmations
+            </h4>
+
+            <div className="flex items-start space-x-2">
+              <input
+                type="checkbox"
+                id="ownership-confirmed"
+                checked={ownershipConfirmed}
+                onChange={(e) => onOwnershipConfirmedChange(e.target.checked)}
+                className="h-4 w-4 mt-0.5 rounded border-gray-300 dark:border-stone-700"
+                disabled={scrapingComplete}
+              />
+              <label
+                htmlFor="ownership-confirmed"
+                className="text-sm cursor-pointer text-gray-900 dark:text-white"
+              >
+                I confirm that this website belongs to me or my organization
+              </label>
+            </div>
+
+            <div className="flex items-start space-x-2">
+              <input
+                type="checkbox"
+                id="permission-granted"
+                checked={permissionGranted}
+                onChange={(e) => onPermissionGrantedChange(e.target.checked)}
+                className="h-4 w-4 mt-0.5 rounded border-gray-300 dark:border-stone-700"
+                disabled={scrapingComplete}
+              />
+              <label
+                htmlFor="permission-granted"
+                className="text-sm cursor-pointer text-gray-900 dark:text-white"
+              >
+                I grant permission to scrape and analyze the content of this
+                website
+              </label>
+            </div>
+
+            <div className="flex items-start space-x-2">
+              <input
+                type="checkbox"
+                id="terms-read"
+                checked={termsRead}
+                onChange={(e) => onTermsReadChange(e.target.checked)}
+                className="h-4 w-4 mt-0.5 rounded border-gray-300 dark:border-stone-700"
+                disabled={scrapingComplete}
+              />
+              <label
+                htmlFor="terms-read"
+                className="text-sm cursor-pointer text-gray-900 dark:text-white"
+              >
+                I have read and understood all warnings and terms regarding
+                website scraping
+              </label>
+            </div>
+          </div>
+
+          {/* Scrape Button */}
+          <Button
+            onClick={onScrapeWebsite}
+            disabled={!canScrape || isScraping}
+            className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50"
+          >
+            {isScraping ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" />
+                Scraping Website...
+              </>
+            ) : scrapingComplete ? (
+              "✓ Website Successfully Scraped"
+            ) : (
+              "Scrape Website"
+            )}
+          </Button>
+
+          {/* Error Display */}
+          {scrapingError && (
+            <div className="rounded-md border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-3">
+              <div className="flex items-start gap-2">
+                <div className="text-red-600 dark:text-red-400 mt-0.5">⚠</div>
+                <div>
+                  <p className="text-sm font-semibold text-red-900 dark:text-red-200">
+                    Scraping Error
+                  </p>
+                  <p className="text-sm text-red-800 dark:text-red-300 mt-1">
+                    {scrapingError}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Success Display */}
+          {scrapingComplete && scrapedContent && (
+            <div className="rounded-md border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-950/30 p-3">
+              <div className="flex items-start gap-2">
+                <div className="text-green-600 dark:text-green-400 mt-0.5">✓</div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-green-900 dark:text-green-200">
+                    Website Successfully Scraped
+                  </p>
+                  <p className="text-sm text-green-800 dark:text-green-300 mt-1">
+                    Content has been extracted and will be used to train your bot.
+                    {scrapedContent.length > 0 &&
+                      ` (${Math.ceil(scrapedContent.length / 1000)}KB of content)`}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+// Step 5: Bot Behavior
+const Step5Behavior = ({
   description,
   OwnerInformation,
   additionalInformation,
@@ -495,8 +755,8 @@ const Step4Behavior = ({
   );
 };
 
-// Step 5: Examples
-const Step5Examples = ({
+// Step 6: Examples
+const Step6Examples = ({
   examples,
   onChange,
   isValidated,
@@ -668,8 +928,8 @@ const Step5Examples = ({
   );
 };
 
-// Step 6: API Integration
-const Step6API = ({
+// Step 7: API Integration
+const Step7API = ({
   enabled,
   endpoint,
   apiUsageRules,
@@ -826,6 +1086,14 @@ export default function CreateWebsiteBotWizard() {
     verbosity: "",
     websiteType: "",
     otherWebsiteType: "",
+    scrapingEnabled: false,
+    websiteUrl: "",
+    ownershipConfirmed: false,
+    permissionGranted: false,
+    termsRead: false,
+    scrapingComplete: false,
+    scrapedContent: "",
+    scrapingError: "",
     behaviorDescription: "",
     OwnerInformation: "",
     additionalInformation: "",
@@ -841,6 +1109,7 @@ export default function CreateWebsiteBotWizard() {
   });
   const [isFilledUp, setIsFilledUp] = useState<boolean>(false);
   const [alreadyFilledUp, setAlreadyFilledUp] = useState<boolean>(false);
+  const [isScraping, setIsScraping] = useState<boolean>(false);
 
   const fetchBotStructure = async (): Promise<void> => {
     try {
@@ -1066,6 +1335,71 @@ export default function CreateWebsiteBotWizard() {
     }
   };
 
+  const scrapeWebsite = async (): Promise<void> => {
+    if (!wizardState.websiteUrl) {
+      toast.error("Please enter a website URL.");
+      return;
+    }
+
+    if (
+      !wizardState.ownershipConfirmed ||
+      !wizardState.permissionGranted ||
+      !wizardState.termsRead
+    ) {
+      toast.error("Please confirm all required checkboxes.");
+      return;
+    }
+
+    try {
+      setIsScraping(true);
+      setWizardState((prev) => ({ ...prev, scrapingError: "" }));
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/botConfig/scrapeWebsite`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ websiteUrl: wizardState.websiteUrl }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setWizardState((prev) => ({
+          ...prev,
+          scrapingComplete: false,
+          scrapingError:
+            data?.message ||
+            "Failed to scrape website. Please check the URL and try again.",
+        }));
+        toast.error("Failed to scrape website. Please try again.");
+        return;
+      }
+
+      setWizardState((prev) => ({
+        ...prev,
+        scrapingComplete: true,
+        scrapedContent: data?.scrapedContent || "",
+        scrapingError: "",
+      }));
+      toast.success("Website scraped successfully!");
+    } catch (error) {
+      console.error("Error scraping website:", error);
+      setWizardState((prev) => ({
+        ...prev,
+        scrapingComplete: false,
+        scrapingError:
+          "An unexpected error occurred while scraping. Please try again.",
+      }));
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsScraping(false);
+    }
+  };
+
   const runApiTest = async (): Promise<void> => {
     if (
       wizardState.apiEndpoint.includes("localhost") ||
@@ -1202,14 +1536,18 @@ export default function CreateWebsiteBotWizard() {
             wizardState.otherWebsiteType.trim().length >= 3)
         );
       case 4:
-        return wizardState.behaviorDescription.trim().length >= 100;
+        // Scraping step - if enabled, must be complete
+        if (!wizardState.scrapingEnabled) return true;
+        return wizardState.scrapingComplete;
       case 5:
+        return wizardState.behaviorDescription.trim().length >= 100;
+      case 6:
         return (
           wizardState.examples.some(
             (ex) => ex.question.trim() && ex.answer.trim()
           ) && wizardState.examplesValidated
         );
-      case 6:
+      case 7:
         if (!wizardState.apiEnabled) return true;
         return wizardState.apiTestPassed === true;
       default:
@@ -1272,7 +1610,27 @@ export default function CreateWebsiteBotWizard() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ userId, botId, botStyle : "free-style", botType : wizardState.botType, websiteType: wizardState.websiteType, otherWebsiteType: wizardState.otherWebsiteType, tone: wizardState.tone, verbosity: wizardState.verbosity, behaviorDescription: wizardState.behaviorDescription, OwnerInformation : wizardState.OwnerInformation, additionalInformation : wizardState.additionalInformation, examples: wizardState.examples, apiEnabled: wizardState.apiEnabled, apiEndpoint: wizardState.apiEndpoint, apiUsageRules: wizardState.apiUsageRules, responseFormat: wizardState.responseFormat }),
+      body: JSON.stringify({ 
+        userId, 
+        botId, 
+        botStyle : "free-style", 
+        botType : wizardState.botType, 
+        websiteType: wizardState.websiteType, 
+        otherWebsiteType: wizardState.otherWebsiteType, 
+        tone: wizardState.tone, 
+        verbosity: wizardState.verbosity, 
+        scrapingEnabled: wizardState.scrapingEnabled,
+        websiteUrl: wizardState.websiteUrl,
+        scrapedContent: wizardState.scrapedContent,
+        behaviorDescription: wizardState.behaviorDescription, 
+        OwnerInformation : wizardState.OwnerInformation, 
+        additionalInformation : wizardState.additionalInformation, 
+        examples: wizardState.examples, 
+        apiEnabled: wizardState.apiEnabled, 
+        apiEndpoint: wizardState.apiEndpoint, 
+        apiUsageRules: wizardState.apiUsageRules, 
+        responseFormat: wizardState.responseFormat 
+      }),
       }
     );
 
@@ -1302,8 +1660,8 @@ export default function CreateWebsiteBotWizard() {
 
   const handleNext = async () => {
     if (validateStep(currentStep)) {
-      // Special validation for Step 4 with API call
-      if (currentStep === 4) {
+      // Special validation for Step 5 (Bot Behavior) with API call
+      if (currentStep === 5) {
         const isValid = await validateTextWithAPI();
         if (!isValid) {
           toast.error("Validation failed. Please review the errors below.");
@@ -1391,7 +1749,33 @@ export default function CreateWebsiteBotWizard() {
             )}
 
             {currentStep === 4 && (
-              <Step4Behavior
+              <Step4Scraping
+                scrapingEnabled={wizardState.scrapingEnabled}
+                websiteUrl={wizardState.websiteUrl}
+                ownershipConfirmed={wizardState.ownershipConfirmed}
+                permissionGranted={wizardState.permissionGranted}
+                termsRead={wizardState.termsRead}
+                scrapingComplete={wizardState.scrapingComplete}
+                scrapedContent={wizardState.scrapedContent}
+                scrapingError={wizardState.scrapingError}
+                onScrapingEnabledChange={(val) =>
+                  updateState("scrapingEnabled", val)
+                }
+                onWebsiteUrlChange={(val) => updateState("websiteUrl", val)}
+                onOwnershipConfirmedChange={(val) =>
+                  updateState("ownershipConfirmed", val)
+                }
+                onPermissionGrantedChange={(val) =>
+                  updateState("permissionGranted", val)
+                }
+                onTermsReadChange={(val) => updateState("termsRead", val)}
+                onScrapeWebsite={scrapeWebsite}
+                isScraping={isScraping}
+              />
+            )}
+
+            {currentStep === 5 && (
+              <Step5Behavior
                 description={wizardState.behaviorDescription}
                 OwnerInformation={wizardState.OwnerInformation}
                 additionalInformation={wizardState.additionalInformation}
@@ -1409,8 +1793,8 @@ export default function CreateWebsiteBotWizard() {
               />
             )}
 
-            {currentStep === 5 && (
-              <Step5Examples
+            {currentStep === 6 && (
+              <Step6Examples
                 examples={wizardState.examples}
                 onChange={(val) => {
                   updateState("examples", val);
@@ -1425,8 +1809,8 @@ export default function CreateWebsiteBotWizard() {
               />
             )}
 
-            {currentStep === 6 && (
-              <Step6API
+            {currentStep === 7 && (
+              <Step7API
                 enabled={wizardState.apiEnabled}
                 endpoint={wizardState.apiEndpoint}
                 apiUsageRules={wizardState.apiUsageRules}
