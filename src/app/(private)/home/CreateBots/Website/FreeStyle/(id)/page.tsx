@@ -1355,17 +1355,19 @@ export default function CreateWebsiteBotWizard() {
       setWizardState((prev) => ({ ...prev, scrapingError: "" }));
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/botConfig/scrapeWebsite`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/ScrapeWebsiteForBot`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ websiteUrl: wizardState.websiteUrl }),
+          body: JSON.stringify({ url: wizardState.websiteUrl, botId : botId }),
+          credentials: "include",
         }
       );
 
       const data = await response.json();
+      console.log("Scraping response:", data);
 
       if (!response.ok) {
         setWizardState((prev) => ({
@@ -1382,7 +1384,7 @@ export default function CreateWebsiteBotWizard() {
       setWizardState((prev) => ({
         ...prev,
         scrapingComplete: true,
-        scrapedContent: data?.scrapedContent || "",
+        scrapedContent: data?.message || "",
         scrapingError: "",
       }));
       toast.success("Website scraped successfully!");
