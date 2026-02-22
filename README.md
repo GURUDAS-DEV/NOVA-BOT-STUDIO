@@ -256,10 +256,9 @@ export default function ControlledBotEditor() {
 }
 ```
 
-### Playground – Testing Bot Responses (updated request body)
+### Playground – Testing Bot Responses (updated request payload)
 
-The **Playground** page lets you experiment with a bot’s behaviour without creating a full bot configuration.  
-A recent change renamed the request payload key from `prompt` to `messages`. The API now expects an array of message objects that follow the OpenAI‑compatible schema.
+The **Playground** page lets you experiment with a bot’s behaviour without creating a full bot configuration. A recent change renamed the request payload key from `prompt` to `messages`. The API now expects an array of message objects that follow the OpenAI‑compatible schema.
 
 ```tsx
 import { useState } from "react";
@@ -321,22 +320,17 @@ export default function Playground() {
 
 ---  
 
-## Development  
+## API Documentation  
 
-### Setting up the development environment  
+> The backend API is versioned independently. The following endpoints are consumed by the frontend. Adjust `NEXT_PUBLIC_API_BASE_URL` accordingly.
 
-1. Follow the **Getting Started** steps above.  
-2. Run `npm run lint` to verify code quality.  
-3. Run `npm run test` (once tests are added) to ensure functionality.  
-
-### Code style  
-
-* **TypeScript** – strict mode enabled (`tsconfig.json`).  
-* **Prettier** – run `npm run format` before committing.  
-* **ESLint** – follows the `eslint-config-next` preset; no warnings should appear in CI.  
-
-### Debugging tips  
-
-* Use the built‑in **React DevTools** and **Next.js Fast Refresh** for UI debugging.  
-* API errors are surfaced via `sonner` toast notifications; check the browser console for stack traces.  
-* For server‑side issues, inspect
+| Method | Endpoint | Description | Request Body Example |
+|--------|----------|-------------|----------------------|
+| `POST` | `/api/auth/login` | Authenticate a user and set an HTTP‑only session cookie. | `{ "email": "user@example.com", "password": "secret" }` |
+| `POST` | `/api/auth/logout` | Destroy the session. | – |
+| `GET` | `/api/bots` | List bots owned by the authenticated user. | – |
+| `POST` | `/api/bots` | Create a new bot configuration. | `{ "name": "My Bot", "config": { … } }` |
+| `GET` | `/api/bots/:id` | Retrieve a single bot’s configuration. | – |
+| `PATCH` | `/api/bots/:id` | Update bot configuration. | `{ "config": { … } }` |
+| `DELETE` | `/api/bots/:id` | Delete a bot. | – |
+| `POST` | `/api/playground` | Run a
