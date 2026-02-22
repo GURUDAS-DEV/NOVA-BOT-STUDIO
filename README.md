@@ -1,6 +1,6 @@
 # Nova Bot Studio  
 
-![Next.js](https://img.shields.io/badge/Next.js-16.0.7-000000?logo=nextdotjs) ![React](https://img.shields.io/badge/React-19.2.0-61DAFB?logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6?logo=typescript) ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.0-38B2AC?logo=tailwindcss) ![Docker](https://img.shields.io/badge/Docker-✓-2496ED?logo=docker) ![License](https://img.shields.io/badge/License-MIT-green) ![GitHub last commit](https://img.shields.io/github/last-commit/GURUDAS-DEV/NOVA-BOT-STUDIO) ![CI](https://github.com/GURUDAS-DEV/NOVA-BOT-STUDIO/actions/workflows/ci.yml/badge.svg) ![Coverage](https://img.shields.io/badge/Coverage-100%25-44CC11)  
+![Next.js](https://img.shields.io/badge/Next.js-16.0.7-000000?logo=nextdotjs) ![React](https://img.shields.io/badge/React-19.2.0-61DAFB?logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6?logo=typescript) ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.0-38B2AC?logo=tailwindcss) ![Docker](https://img.shields.io/badge/Docker-✓-2496ED?logo=docker) ![License](https://img.shields.io/badge/License-MIT-green) ![GitHub last commit](https://img.shields.io/github/last-commit/GURUDAS-DEV/NOVA-BOT-STUDIO) ![CI](https://github.com/GURUDAS-DEV/NOVA-BOT-STUDIO/actions/workflows/ci.yml/badge.svg) ![Coverage](https://img.shields.io/badge/Coverage-100%25-44CC11)
 
 **The ultimate AI‑powered bot platform for automation – design, integrate and manage bots without writing code.**  
 
@@ -256,7 +256,7 @@ export default function ControlledBotEditor() {
 }
 ```
 
-### Playground – Testing Bot Responses (updated request payload)
+### Playground – Testing Bot Responses (updated payload)
 
 The **Playground** page lets you experiment with a bot’s behaviour without creating a full bot configuration. A recent change renamed the request payload key from `prompt` to `messages`. The API now expects an array of message objects that follow the OpenAI‑compatible schema.
 
@@ -322,15 +322,4 @@ export default function Playground() {
 
 ## API Documentation  
 
-> The backend API is versioned independently. The following endpoints are consumed by the frontend. Adjust `NEXT_PUBLIC_API_BASE_URL` accordingly.
-
-| Method | Endpoint | Description | Request Body Example |
-|--------|----------|-------------|----------------------|
-| `POST` | `/api/auth/login` | Authenticate a user and set an HTTP‑only session cookie. | `{ "email": "user@example.com", "password": "secret" }` |
-| `POST` | `/api/auth/logout` | Destroy the session. | – |
-| `GET` | `/api/bots` | List bots owned by the authenticated user. | – |
-| `POST` | `/api/bots` | Create a new bot configuration. | `{ "name": "My Bot", "config": { … } }` |
-| `GET` | `/api/bots/:id` | Retrieve a single bot’s configuration. | – |
-| `PATCH` | `/api/bots/:id` | Update bot configuration. | `{ "config": { … } }` |
-| `DELETE` | `/api/bots/:id` | Delete a bot. | – |
-| `POST` | `/api/playground` | Run a
+> The backend API is versioned independently. The following endpoints are consumed by the frontend. Adjust `NEXT_PUBLIC_API_BASE_URL` accordingly
