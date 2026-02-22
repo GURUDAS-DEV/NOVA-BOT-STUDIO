@@ -43,6 +43,15 @@ interface FormData {
   tone: string;
   verbosity: string;
   websiteContext: string;
+  scrapingEnabled: boolean;
+  scrapeStatus: "notOpted" | "running" | "completed" | "failed";
+  websiteUrl: string;
+  ownershipConfirmed: boolean;
+  permissionGranted: boolean;
+  termsRead: boolean;
+  scrapingComplete: boolean;
+  scrapedContent: string;
+  scrapingError: string;
   detailedDescription: string;
   OwnerInformation: string;
   additionalInformation: string;
@@ -55,6 +64,10 @@ interface FormData {
 interface configPayloadInterface {
   botType: string;
   websiteType: string;
+  scrapingEnabled?: boolean;
+  scrapeStatus?: "notOpted" | "running" | "completed" | "failed";
+  websiteUrl?: string;
+  scrapedContent?: string;
   tone: string;
   verbosity: string;
   behaviorDescription: string;
@@ -80,6 +93,7 @@ const EditBotPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isScraping, setIsScraping] = useState(false);
   const [isTestingApi, setIsTestingApi] = useState(false);
   const [pendingEnhancedText, setPendingEnhancedText] = useState<string | null>(null);
   const [editingSection, setEditingSection] = useState<string | null>(null);
@@ -119,6 +133,15 @@ const EditBotPage = () => {
     tone: "Professional",
     verbosity: "Friendly",
     websiteContext: "",
+    scrapingEnabled: false,
+    scrapeStatus: "notOpted",
+    websiteUrl: "",
+    ownershipConfirmed: false,
+    permissionGranted: false,
+    termsRead: false,
+    scrapingComplete: false,
+    scrapedContent: "",
+    scrapingError: "",
     detailedDescription: "",
     OwnerInformation: "",
     additionalInformation: "",
@@ -149,22 +172,61 @@ const EditBotPage = () => {
         return;
       }
 
-      setBotName(data?.botConfig?.botName || "My Website Bot");
+      setBotName(data?.config?.botName || "My Website Bot");
+      console.log("Fetched bot configuration:", data);
+      
+      // Check if scraped content exists - this is the source of truth for completion
+      const hasScrapedContent = !!(
+        data?.config?.config?.scrapedContent &&
+        String(data?.config?.config?.scrapedContent).trim().length > 0
+      );
+      
+      // scrapeStatus is at root level of response, not inside config
+      // Backend sends "setup" as default, treat it same as "notOpted"
+      let scrapeStatus: FormData["scrapeStatus"];
+      if (hasScrapedContent) {
+        // If scraped content exists, scraping is completed - don't allow re-scraping
+        scrapeStatus = "completed";
+      } else {
+        const rawScrapeStatus = String(data?.scrapeStatus || "").toLowerCase().trim();
+        
+        if (rawScrapeStatus === "completed") {
+          scrapeStatus = "completed";
+        } else if (rawScrapeStatus === "running") {
+          scrapeStatus = "running";
+        } else if (rawScrapeStatus === "failed") {
+          scrapeStatus = "failed";
+        } else {
+          // "setup", "notOpted", or any other value = not opted
+          scrapeStatus = "notOpted";
+        }
+      }
+      
+      const scrapingEnabled = scrapeStatus !== "notOpted";
       setFormData({
-        botType: data?.botConfig?.config?.botType || "Freestyle Website Bot",
-        tone: data?.botConfig?.config?.tone || "Professional",
-        verbosity: data?.botConfig?.config?.verbosity || "Friendly",
-        websiteContext: data?.botConfig?.config?.websiteType || "",
-        detailedDescription: data?.botConfig?.config?.behaviorDescription || "",
-        OwnerInformation: data?.botConfig?.config?.OwnerInformation || "",
+        botType: data?.config?.config?.botType || "Freestyle Website Bot",
+        tone: data?.config?.config?.tone || "Professional",
+        verbosity: data?.config?.config?.verbosity || "Friendly",
+        websiteContext: data?.config?.config?.websiteType || "",
+        scrapingEnabled,
+        scrapeStatus,
+        websiteUrl: data?.config?.config?.websiteUrl || "",
+        ownershipConfirmed: scrapingEnabled,
+        permissionGranted: scrapingEnabled,
+        termsRead: scrapingEnabled,
+        scrapingComplete: scrapeStatus === "completed" || hasScrapedContent,
+        scrapedContent: data?.config?.config?.scrapedContent || "",
+        scrapingError: "",
+        detailedDescription: data?.config?.config?.behaviorDescription || "",
+        OwnerInformation: data?.config?.config?.OwnerInformation || "",
         additionalInformation:
-          data?.botConfig?.config?.additionalInformation || "",
-        examples: data?.botConfig?.config?.examples || [
+          data?.config?.config?.additionalInformation || "",
+        examples: data?.config?.config?.examples || [
           { question: "", answer: "" },
         ],
-        apiEndpoint: data?.botConfig?.config?.apiEndpoint || "",
-        responseFormat: data?.botConfig?.config?.responseFormat || "",
-        apiUsageRules: data?.botConfig?.config?.apiUsageRules || "",
+        apiEndpoint: data?.config?.config?.apiEndpoint || "",
+        responseFormat: data?.config?.config?.responseFormat || "",
+        apiUsageRules: data?.config?.config?.apiUsageRules || "",
       });
     } catch (e) {
       console.error("Error fetching bot configuration:", e);
@@ -195,6 +257,15 @@ const EditBotPage = () => {
     return null;
   };
 
+  const isValidUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.protocol === "http:" || urlObj.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
   const handleSaveChanges = async () => {
     if (formData.detailedDescription.trim().length < 100) {
       toast.error("Detailed description must be at least 100 characters.");
@@ -220,6 +291,18 @@ const EditBotPage = () => {
         additionalInformation: formData.additionalInformation,
         examples: formData.examples,
       };
+
+      if (formData.scrapingEnabled) {
+        configPayload.scrapingEnabled = true;
+        configPayload.scrapeStatus = formData.scrapeStatus;
+        configPayload.websiteUrl = formData.websiteUrl;
+        configPayload.scrapedContent = formData.scrapedContent;
+      } else {
+        configPayload.scrapingEnabled = false;
+        configPayload.scrapeStatus = "notOpted";
+        configPayload.websiteUrl = "";
+        configPayload.scrapedContent = "";
+      }
 
       // Only include API fields if API endpoint is configured
       if (formData.apiEndpoint.trim()) {
@@ -324,6 +407,72 @@ const EditBotPage = () => {
       const updated = { ...tempFormData, websiteContext: serialized };
       setFormData(updated);
       toast.success("Website Context updated.");
+      closeEditSection();
+      return;
+    }
+
+    if (editingSection === "websiteScraping") {
+      if (tempFormData.scrapeStatus === "running") {
+        toast.error("Scraping is currently running. Please wait for it to finish.");
+        return;
+      }
+
+      if (tempFormData.scrapeStatus === "completed") {
+        setFormData(tempFormData);
+        toast.success("Website scraping settings updated.");
+        closeEditSection();
+        return;
+      }
+
+      if (!tempFormData.scrapingEnabled) {
+        const updated: FormData = {
+          ...tempFormData,
+          scrapingEnabled: false,
+          scrapeStatus: "notOpted" as const,
+          websiteUrl: "",
+          ownershipConfirmed: false,
+          permissionGranted: false,
+          termsRead: false,
+          scrapingComplete: false,
+          scrapedContent: "",
+          scrapingError: "",
+        };
+        setFormData(updated);
+        toast.success("Website scraping disabled.");
+        closeEditSection();
+        return;
+      }
+
+      if (!tempFormData.websiteUrl.trim()) {
+        toast.error("Please enter a website URL.");
+        return;
+      }
+
+      if (!isValidUrl(tempFormData.websiteUrl.trim())) {
+        toast.error("Please enter a valid URL starting with http:// or https://.");
+        return;
+      }
+
+      if (
+        !tempFormData.ownershipConfirmed ||
+        !tempFormData.permissionGranted ||
+        !tempFormData.termsRead
+      ) {
+        toast.error("Please confirm all required checkboxes.");
+        return;
+      }
+
+      if (!tempFormData.scrapingComplete || !tempFormData.scrapedContent.trim()) {
+        if (tempFormData.scrapeStatus === "failed") {
+          toast.error("Scraping failed. Please scrape again before saving.");
+        } else {
+          toast.error("Please scrape your website successfully before saving.");
+        }
+        return;
+      }
+
+      setFormData(tempFormData);
+      toast.success("Website scraping settings updated.");
       closeEditSection();
       return;
     }
@@ -462,6 +611,24 @@ const EditBotPage = () => {
       icon: <MdLanguage className="size-6" />,
       locked: false,
       preview: formData.websiteContext || "Not set",
+    },
+    {
+      id: "websiteScraping",
+      title: "Website Scraping",
+      description: "Scrape website content for bot context",
+      icon: <MdSmartToy className="size-6" />,
+      locked: false,
+      preview:
+        // If scraped content exists, always show as completed
+        formData.scrapedContent?.trim()
+          ? "Enabled • Scraped"
+          : formData.scrapeStatus === "completed"
+            ? "Enabled • Scraped"
+            : formData.scrapeStatus === "running"
+              ? "Enabled • Running"
+              : formData.scrapeStatus === "failed"
+                ? "Enabled • Failed"
+                : "Disabled",
     },
     {
       id: "detailedDescription",
@@ -713,6 +880,324 @@ const EditBotPage = () => {
                     <p className="text-xs text-gray-600 dark:text-gray-400 font-outfit">
                       Tip: Choose the 5 categories that best describe your website. Use &quot;Other&quot; if none fit.
                     </p>
+                  </div>
+                )}
+
+                {/* Website Scraping Section */}
+                {editingSection === "websiteScraping" && (
+                  <div className="space-y-6">
+                    {/* Show completed banner if scraped content exists OR status is completed */}
+                    {(!!tempFormData.scrapedContent?.trim() || tempFormData.scrapeStatus === "completed") && (
+                      <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
+                        <p className="text-sm text-green-800 dark:text-green-300 font-outfit">
+                          Website scraping is completed. Re-scraping is disabled.
+                        </p>
+                      </div>
+                    )}
+                    {tempFormData.scrapeStatus === "running" && (
+                      <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
+                        <p className="text-sm text-blue-800 dark:text-blue-300 font-outfit">
+                          Scraping is currently running. Please wait for it to finish.
+                        </p>
+                      </div>
+                    )}
+                    {/* Only show failed banner if there's no scraped content */}
+                    {!tempFormData.scrapedContent?.trim() && tempFormData.scrapeStatus === "failed" && (
+                      <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-900">
+                        <p className="text-sm text-amber-800 dark:text-amber-300 font-outfit">
+                          Previous scraping attempt failed. You can try scraping again.
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
+                      <input
+                        type="checkbox"
+                        checked={tempFormData.scrapingEnabled}
+                        onChange={(e) =>
+                          updateTempField("scrapingEnabled", e.target.checked)
+                        }
+                        disabled={
+                          !!tempFormData.scrapedContent?.trim() ||
+                          tempFormData.scrapeStatus === "completed" ||
+                          tempFormData.scrapeStatus === "running"
+                        }
+                        className="w-5 h-5 cursor-pointer accent-blue-600 dark:accent-blue-400"
+                      />
+                      <label className="text-sm font-medium text-gray-900 dark:text-white font-outfit cursor-pointer flex-1">
+                        Enable Website Scraping
+                      </label>
+                    </div>
+
+                    {tempFormData.scrapingEnabled && (
+                      <>
+                        <div className="rounded-md p-4 flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                          <div className="text-amber-700 dark:text-amber-200 mt-0.5">
+                            <MdErrorOutline className="h-5 w-5" />
+                          </div>
+                          <div className="text-sm text-amber-800 dark:text-amber-100 font-outfit">
+                            <div className="font-semibold mb-1">Important Notice</div>
+                            <ul className="list-disc list-inside space-y-1">
+                              <li>Only scrape websites you own or have permission to scrape</li>
+                              <li>Scraping may take a few minutes depending on website size</li>
+                              <li>The scraped content will be used to train your bot</li>
+                              <li>We respect robots.txt and site policies</li>
+                            </ul>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-900 dark:text-white font-outfit">
+                            Website URL
+                          </label>
+                          <Input
+                            type="url"
+                            placeholder="https://www.example.com"
+                            value={tempFormData.websiteUrl}
+                            onChange={(e) => {
+                              updateTempField("websiteUrl", e.target.value);
+                              updateTempField("scrapingComplete", false);
+                              updateTempField("scrapeStatus", "notOpted");
+                              updateTempField("scrapedContent", "");
+                              updateTempField("scrapingError", "");
+                            }}
+                            className="dark:bg-black bg-white dark:text-white text-black font-outfit"
+                            disabled={
+                              !!tempFormData.scrapedContent?.trim() ||
+                              tempFormData.scrapeStatus === "completed" ||
+                              tempFormData.scrapeStatus === "running"
+                            }
+                          />
+                          {tempFormData.websiteUrl && !isValidUrl(tempFormData.websiteUrl) && (
+                            <p className="text-xs text-red-600 dark:text-red-400 font-outfit">
+                              Please enter a valid URL starting with http:// or https://
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="space-y-3 p-4 rounded-md bg-gray-50 dark:bg-stone-800/50 border border-gray-200 dark:border-stone-700">
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white font-outfit mb-2">
+                            Required Confirmations
+                          </h4>
+
+                          <div className="flex items-start space-x-2">
+                            <input
+                              type="checkbox"
+                              id="edit-ownership-confirmed"
+                              checked={tempFormData.ownershipConfirmed}
+                              onChange={(e) =>
+                                updateTempField("ownershipConfirmed", e.target.checked)
+                              }
+                              className="h-4 w-4 mt-0.5 rounded border-gray-300 dark:border-stone-700"
+                              disabled={
+                                !!tempFormData.scrapedContent?.trim() ||
+                                tempFormData.scrapeStatus === "completed" ||
+                                tempFormData.scrapeStatus === "running"
+                              }
+                            />
+                            <label
+                              htmlFor="edit-ownership-confirmed"
+                              className="text-sm cursor-pointer text-gray-900 dark:text-white font-outfit"
+                            >
+                              I confirm that this website belongs to me or my organization
+                            </label>
+                          </div>
+
+                          <div className="flex items-start space-x-2">
+                            <input
+                              type="checkbox"
+                              id="edit-permission-granted"
+                              checked={tempFormData.permissionGranted}
+                              onChange={(e) =>
+                                updateTempField("permissionGranted", e.target.checked)
+                              }
+                              className="h-4 w-4 mt-0.5 rounded border-gray-300 dark:border-stone-700"
+                              disabled={
+                                !!tempFormData.scrapedContent?.trim() ||
+                                tempFormData.scrapeStatus === "completed" ||
+                                tempFormData.scrapeStatus === "running"
+                              }
+                            />
+                            <label
+                              htmlFor="edit-permission-granted"
+                              className="text-sm cursor-pointer text-gray-900 dark:text-white font-outfit"
+                            >
+                              I grant permission to scrape and analyze the content of this website
+                            </label>
+                          </div>
+
+                          <div className="flex items-start space-x-2">
+                            <input
+                              type="checkbox"
+                              id="edit-terms-read"
+                              checked={tempFormData.termsRead}
+                              onChange={(e) => updateTempField("termsRead", e.target.checked)}
+                              className="h-4 w-4 mt-0.5 rounded border-gray-300 dark:border-stone-700"
+                              disabled={
+                                !!tempFormData.scrapedContent?.trim() ||
+                                tempFormData.scrapeStatus === "completed" ||
+                                tempFormData.scrapeStatus === "running"
+                              }
+                            />
+                            <label
+                              htmlFor="edit-terms-read"
+                              className="text-sm cursor-pointer text-gray-900 dark:text-white font-outfit"
+                            >
+                              I have read and understood all warnings and terms regarding website scraping
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Only show scrape button if no scraped content exists AND status is failed/notOpted */}
+                        {!tempFormData.scrapedContent?.trim() &&
+                          (tempFormData.scrapeStatus === "failed" ||
+                            tempFormData.scrapeStatus === "notOpted") && (
+                          <Button
+                            onClick={async () => {
+                            if (!id) {
+                              toast.error("Bot ID not found.");
+                              return;
+                            }
+
+                            // Double-check: prevent scraping if content already exists
+                            if (tempFormData.scrapedContent?.trim()) {
+                              toast.error("Website has already been scraped. Re-scraping is not allowed.");
+                              return;
+                            }
+
+                            if (!tempFormData.websiteUrl.trim()) {
+                              toast.error("Please enter a website URL.");
+                              return;
+                            }
+
+                            if (!isValidUrl(tempFormData.websiteUrl.trim())) {
+                              toast.error("Please enter a valid URL starting with http:// or https://.");
+                              return;
+                            }
+
+                            if (
+                              !tempFormData.ownershipConfirmed ||
+                              !tempFormData.permissionGranted ||
+                              !tempFormData.termsRead
+                            ) {
+                              toast.error("Please confirm all required checkboxes.");
+                              return;
+                            }
+
+                            try {
+                              setIsScraping(true);
+                              updateTempField("scrapeStatus", "running");
+                              updateTempField("scrapingError", "");
+
+                              const response = await fetch(
+                                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/bot/ScrapeWebsiteForBot`,
+                                {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({
+                                    url: tempFormData.websiteUrl,
+                                    botId: id,
+                                  }),
+                                  credentials: "include",
+                                }
+                              );
+
+                              const data = await response.json();
+
+                              if (!response.ok) {
+                                updateTempField(
+                                  "scrapingError",
+                                  data?.message ||
+                                    "Failed to scrape website. Please check URL and try again."
+                                );
+                                updateTempField("scrapingComplete", false);
+                                updateTempField("scrapeStatus", "failed");
+                                updateTempField("scrapedContent", "");
+                                toast.error("Failed to scrape website.");
+                                return;
+                              }
+
+                              updateTempField("scrapingComplete", true);
+                              updateTempField("scrapeStatus", "completed");
+                              updateTempField("scrapedContent", data?.message || "");
+                              updateTempField("scrapingError", "");
+                              toast.success("Website scraped successfully!");
+                            } catch {
+                              updateTempField(
+                                "scrapingError",
+                                "An unexpected error occurred while scraping. Please try again."
+                              );
+                              updateTempField("scrapingComplete", false);
+                              updateTempField("scrapeStatus", "failed");
+                              updateTempField("scrapedContent", "");
+                              toast.error("Something went wrong. Please try again.");
+                            } finally {
+                              setIsScraping(false);
+                            }
+                            }}
+                            disabled={
+                              isScraping ||
+                              !tempFormData.scrapingEnabled ||
+                              !isValidUrl(tempFormData.websiteUrl) ||
+                              !tempFormData.ownershipConfirmed ||
+                              !tempFormData.permissionGranted ||
+                              !tempFormData.termsRead
+                            }
+                            className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50 font-outfit"
+                          >
+                            {isScraping ? (
+                              <>
+                                <Spinner className="mr-2 h-4 w-4" />
+                                Scraping Website...
+                              </>
+                            ) : (
+                              "Scrape Website"
+                            )}
+                          </Button>
+                        )}
+
+                        {tempFormData.scrapingError && (
+                          <div className="rounded-md border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-3">
+                            <div className="flex items-start gap-2">
+                              <div className="text-red-600 dark:text-red-400 mt-0.5">⚠</div>
+                              <div>
+                                <p className="text-sm font-semibold text-red-900 dark:text-red-200 font-outfit">
+                                  Scraping Error
+                                </p>
+                                <p className="text-sm text-red-800 dark:text-red-300 mt-1 font-outfit">
+                                  {tempFormData.scrapingError}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {tempFormData.scrapingComplete && tempFormData.scrapedContent && (
+                          <div className="rounded-md border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-950/30 p-3">
+                            <div className="flex items-start gap-2">
+                              <div className="text-green-600 dark:text-green-400 mt-0.5">✓</div>
+                              <div className="flex-1">
+                                <p className="text-sm font-semibold text-green-900 dark:text-green-200 font-outfit">
+                                  Website Successfully Scraped
+                                </p>
+                                <p className="text-sm text-green-800 dark:text-green-300 mt-1 font-outfit">
+                                  Content has been extracted and will be used to train your bot.
+                                  {tempFormData.scrapedContent.length > 0 &&
+                                    ` (${Math.ceil(tempFormData.scrapedContent.length / 1000)}KB of content)`}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {!tempFormData.scrapingEnabled && (
+                      <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-900">
+                        <p className="text-sm text-amber-800 dark:text-amber-300 font-outfit">
+                          Website Scraping is disabled. Scraping fields will be cleared when you save.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 

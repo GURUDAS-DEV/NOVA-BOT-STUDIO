@@ -251,7 +251,7 @@ const ManageBotsPage = () => {
     }
     else  {
       if(bot?.type === "FREESTYLE")
-      router.push(`/home/Edit-Bot-Config/${bot.platform}/FreeStyle?id=${bot._id}`);
+        router.push(`/home/Edit-Bot-Config/${bot.platform}/FreeStyle?id=${bot._id}`);
       else
         router.push(`/home/Edit-Bot-Config/${bot.platform}/Controlled_Style?id=${bot._id}`);
     }

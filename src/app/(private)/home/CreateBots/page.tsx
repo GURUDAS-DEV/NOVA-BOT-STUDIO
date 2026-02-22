@@ -78,7 +78,7 @@ const CreateBotPage = () => {
 
   const botStyles = [
     {
-      id: "FreeStyle",
+      id: "FREESTYLE",
       title: "Freestyle",
       description: "Users can ask any query and the bot will provide answers",
       icon: MdChat,
@@ -151,7 +151,7 @@ const CreateBotPage = () => {
       else{
         switch (selectedPlatform) {
           case "Website" : 
-              router.push(`/home/CreateBots/${selectedPlatform}/${botStyle}?id=${data.id}`);
+              router.push(`/home/CreateBots/${selectedPlatform}/FREESTYLE?id=${data.id}`);
               break;             
         
         }
