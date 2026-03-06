@@ -14,11 +14,9 @@ import {
   MdAutoMode,
   MdCheckCircle
 } from "react-icons/md";
-import { BiData, BiCloud } from "react-icons/bi";
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
 import { useAuthStore } from "@/lib/Store/store";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast, Toaster } from "sonner";
 
 const CreateBotPage = () => {
@@ -27,9 +25,6 @@ const CreateBotPage = () => {
   const [botDescription, setBotDescription] = useState<string>("");
   const [botStyle, setBotStyle] = useState<string | null>(null);
   const router = useRouter();
-
-  const searchParams = useSearchParams();
-  const id = searchParams.get('id');
 
   const {userId} =  useAuthStore();
 
@@ -121,9 +116,9 @@ const CreateBotPage = () => {
       return;
     }
 
-    // If Website platform is selected, bot style is required
-    if (selectedPlatform === "API" && !botStyle) {
-      console.log("Error: Bot style is required for Website platform");
+    // Website and Telegram require style selection
+    if ((selectedPlatform === "Website" || selectedPlatform === "Telegram") && !botStyle) {
+      console.log("Error: Bot style is required for selected platform");
       toast.error("Please select a bot style");
       return;
     }
@@ -150,10 +145,15 @@ const CreateBotPage = () => {
       }
       else{
         switch (selectedPlatform) {
-          case "Website" : 
+          case "Telegram" :
+            router.push(`/home/CreateBots/Telegram/FREESTYLE/${data.id}`);
+              break;
+          case "Website" :
               router.push(`/home/CreateBots/${selectedPlatform}/FREESTYLE?id=${data.id}`);
-              break;             
-        
+            break;
+          default:
+            toast.success("Bot created successfully!");
+            break;
         }
 
       }
@@ -180,8 +180,20 @@ const CreateBotPage = () => {
       console.log("Error creating Controlled Style bot:", data);
       return;
     }
+
     toast.success("Controlled Style bot created successfully!");
-    router.push(`/home/CreateBots/Website/ControlledStyle/${data.botId}`);
+
+    if (selectedPlatform === "Website") {
+      router.push(`/home/CreateBots/Website/ControlledStyle/${data.botId}`);
+      return;
+    }
+
+    if (selectedPlatform === "Telegram") {
+      router.push(`/home/CreateBots/Telegram/Controlled_Style/${data.botId}`);
+      return;
+    }
+
+    toast.info("Controlled style route is not configured for this platform yet.");
     
   };
 
@@ -338,8 +350,8 @@ const CreateBotPage = () => {
           </div>
         </div> */}
 
-        {/* 4. Bot Style (Only for Website/API) */}
-        {selectedPlatform === "Website" && (
+        {/* 4. Bot Style (Website + Telegram) */}
+        {(selectedPlatform === "Website" || selectedPlatform === "Telegram") && (
           <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 rounded-xl p-6 space-y-5">
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 font-outfit">
@@ -399,7 +411,7 @@ const CreateBotPage = () => {
             disabled={
               !botName.trim() || 
               !selectedPlatform || 
-              (selectedPlatform === "API" && !botStyle)
+              ((selectedPlatform === "Website" || selectedPlatform === "Telegram") && !botStyle)
             }
             className="px-8 py-5 bg-pink-600 hover:bg-pink-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-400 text-white font-inter transition-all"
           >
