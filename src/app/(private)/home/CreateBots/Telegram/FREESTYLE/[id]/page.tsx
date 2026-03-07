@@ -1317,6 +1317,7 @@ export default function CreateTelegramBotWizard() {
       );
 
       const data = await response.json().catch(() => ({}));
+      console.log("Scraping response:", data);
 
       if (!response.ok) {
         setWizardState((prev) => ({
@@ -1439,33 +1440,35 @@ export default function CreateTelegramBotWizard() {
   const sendTelegramBotConfig = async (): Promise<void> => {
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/botConfig/setConfig`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/Telegram/SaveTelegramBotConfig`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           userId,
-          botId,
-          botStyle: "free-style",
+            botId,
+            botName: botName || "Telegram Bot",
+            platform: "Telegram",
 
-          telegramBotToken: wizardState.telegramBotToken.trim(),
-          tokenStatus: wizardState.tokenStatus,
+          // Core token and setup checkpoints
+          botToken: wizardState.telegramBotToken.trim(),
 
+          // Personality and website context
           botType: wizardState.botType,
-          websiteType: wizardState.websiteType,
-          otherWebsiteType: wizardState.otherWebsiteType,
           tone: wizardState.tone,
           verbosity: wizardState.verbosity,
+          websiteType: wizardState.websiteType,
+          otherWebsiteType: wizardState.otherWebsiteType,
 
-          scrapingEnabled: wizardState.scrapingEnabled,
-          websiteUrl: wizardState.websiteUrl,
-          scrapedContent: wizardState.scrapedContent,
-
+          // Behavior content
           behaviorDescription: wizardState.behaviorDescription,
           OwnerInformation: wizardState.OwnerInformation,
           additionalInformation: wizardState.additionalInformation,
 
+          // Training examples
           examples: wizardState.examples,
 
+          // Optional API integration
           apiEnabled: wizardState.apiEnabled,
           apiEndpoint: wizardState.apiEndpoint,
           apiUsageRules: wizardState.apiUsageRules,
@@ -1473,13 +1476,16 @@ export default function CreateTelegramBotWizard() {
         }),
       });
 
+
+      const data = await response.json().catch(() => ({}));
+      console.log("Set config response:", data);
       if (response.ok) {
         setIsFilledUp(true);
       } else if (response.status == 405) {
         setAlreadyFilledUp(true);
         toast.warning("This bot has already been set up. If you want to make changes, please go to the Manage Bots page.");
       } else {
-        const data = await response.json().catch(() => ({}));
+
         toast.error(data?.message || "Failed to submit bot configuration. Please try again later.");
       }
     } catch (e) {

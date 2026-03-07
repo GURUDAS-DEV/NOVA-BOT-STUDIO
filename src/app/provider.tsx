@@ -1,11 +1,12 @@
 'use client'
 
+import { Suspense } from 'react'
 import { ThemeProvider } from 'next-themes'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 import posthog from '@/lib/posthog'
 
-export function Providers({ children }: { children: React.ReactNode }) {
+function PostHogPageView() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -22,8 +23,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
     })
   }, [pathname, searchParams])
 
+  return null
+}
+
+export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <Suspense fallback={null}>
+        <PostHogPageView />
+      </Suspense>
       {children}
     </ThemeProvider>
   )
