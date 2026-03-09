@@ -92,7 +92,7 @@ export default function ControlledBotBuilder() {
         id: "node-2",
         title: "Order Details",
         message: "Please enter your order number:",
-        input: { key: "orderNumber", type: "text", validation: "^\\d{6,}$", retryLimit: 2 },
+        input: { key: "orderNumber", type: "text", validation: "^[A-Za-z\\s]{2,}$", retryLimit: 2 },
         executor: { type: "api", config: { endpoint: "https://api.example.com/orders", method: "GET" } },
         output: { type: "text", controls: { allowBack: true, allowEnd: true } },
         optionsSource: "static",
@@ -881,9 +881,9 @@ export default function ControlledBotBuilder() {
                         })
                       }
                       className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white text-sm"
-                      placeholder="^\\d{6,}$"
+                      placeholder="^[A-Za-z\\s]{2,}$"
                     />
-                    <p className="text-xs text-stone-500 mt-1">e.g., for 6+ digits use: (6 or more)</p>
+                    <p className="text-xs text-stone-500 mt-1">Text example: letters and spaces with minimum 2 characters</p>
                   </div>
                   <div>
                     <label className="block text-xs font-medium mb-1">Retry Limit</label>
