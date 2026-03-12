@@ -20,6 +20,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { toast, Toaster } from "sonner";
 import { useRouter } from "next/navigation";
 import DailogApiBox from "./dailog/DailogApiBox";
+import DailogDiscordBox from "./dailog/DailogDiscordBox";
 
 const ManageBotsPage = () => {
   const router = useRouter();
@@ -34,6 +35,7 @@ const ManageBotsPage = () => {
   const [noOfBots, setNoOfBots] = useState<number>(0);
   const [botStartLoading, setBotStartLoading] = useState<boolean>(false);
   const [apiDialogOpen, setApiDialogOpen] = useState<boolean>(false);
+  const [discordDialogOpen, setDiscordDialogOpen] = useState<boolean>(false);
   const [selectedApiKey, setSelectedApiKey] = useState<string>("");
 
   const platforms = {
@@ -205,8 +207,14 @@ const ManageBotsPage = () => {
       if(response.ok){
         toast.success("Bot started successfully!");
         setBots(bots.map(bot => bot._id === botId ? {...bot, status: 'active'} : bot));
-        setApiDialogOpen(true);
-        setSelectedApiKey(data.apiKey);
+        const targetBot = bots.find(b => b._id === botId);
+        if (targetBot?.platform === "Discord") {
+            setDiscordDialogOpen(true);
+            setSelectedApiKey(data.apiKey || "");
+        } else {
+            setApiDialogOpen(true);
+            setSelectedApiKey(data.apiKey || "");
+        }
       }
       else{
         toast.error(data.message || "Failed to start the bot.");
@@ -364,6 +372,7 @@ const ManageBotsPage = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       <DailogApiBox apiKey={selectedApiKey} open={apiDialogOpen} onOpenChange={setApiDialogOpen} />
+      <DailogDiscordBox apiKey={selectedApiKey} open={discordDialogOpen} onOpenChange={setDiscordDialogOpen} />
       <Toaster position="top-right" duration={3000} richColors />
       {/* Header Section */}
       <div className="flex items-start justify-between gap-4">

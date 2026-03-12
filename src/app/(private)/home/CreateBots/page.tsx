@@ -151,6 +151,9 @@ const CreateBotPage = () => {
           case "Website" :
               router.push(`/home/CreateBots/${selectedPlatform}/FREESTYLE?id=${data.id}`);
             break;
+          case "Discord" :
+            router.push(`/home/CreateBots/Discord/FreeStyle/${data.id}`);
+            break;
           default:
             toast.success("Bot created successfully!");
             break;
