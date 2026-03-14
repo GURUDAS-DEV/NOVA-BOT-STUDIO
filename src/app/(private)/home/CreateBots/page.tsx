@@ -88,6 +88,10 @@ const CreateBotPage = () => {
     },
   ];
 
+  const platformRequiresBotStyle = ["Website", "Telegram", "Discord"].includes(
+    selectedPlatform ?? ""
+  );
+
 
 
   const getPlatformConfig = (platform: string | null) => {
@@ -116,8 +120,7 @@ const CreateBotPage = () => {
       return;
     }
 
-    // Website and Telegram require style selection
-    if ((selectedPlatform === "Website" || selectedPlatform === "Telegram") && !botStyle) {
+    if (platformRequiresBotStyle && !botStyle) {
       console.log("Error: Bot style is required for selected platform");
       toast.error("Please select a bot style");
       return;
@@ -152,7 +155,7 @@ const CreateBotPage = () => {
               router.push(`/home/CreateBots/${selectedPlatform}/FREESTYLE?id=${data.id}`);
             break;
           case "Discord" :
-            router.push(`/home/CreateBots/Discord/FreeStyle/${data.id}`);
+            router.push(`/home/CreateBots/Discord/FREESTYLE/${data.id}`);
             break;
           default:
             toast.success("Bot created successfully!");
@@ -193,6 +196,11 @@ const CreateBotPage = () => {
 
     if (selectedPlatform === "Telegram") {
       router.push(`/home/CreateBots/Telegram/Controlled_Style/${data.botId}`);
+      return;
+    }
+
+    if (selectedPlatform === "Discord") {
+      router.push(`/home/CreateBots/Discord/ControlledStyle/${data.botId}`);
       return;
     }
 
@@ -354,7 +362,7 @@ const CreateBotPage = () => {
         </div> */}
 
         {/* 4. Bot Style (Website + Telegram) */}
-        {(selectedPlatform === "Website" || selectedPlatform === "Telegram") && (
+        {platformRequiresBotStyle && (
           <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-800 rounded-xl p-6 space-y-5">
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 font-outfit">
@@ -414,7 +422,7 @@ const CreateBotPage = () => {
             disabled={
               !botName.trim() || 
               !selectedPlatform || 
-              ((selectedPlatform === "Website" || selectedPlatform === "Telegram") && !botStyle)
+              (platformRequiresBotStyle && !botStyle)
             }
             className="px-8 py-5 bg-pink-600 hover:bg-pink-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-400 text-white font-inter transition-all"
           >
